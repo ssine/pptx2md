@@ -7,7 +7,7 @@ A tool to convert pptx into markdown.
 How to install:
 
 1. make an empty directory
-2. `git clone `
+2. `git clone https://github.com/ssine/pptx2md.git`
 3. `pip install .`
 4. this directory is useless then, remove it as you like
 
