@@ -55,7 +55,7 @@ Use it as `pptx2md [filename] -t titles.txt`.
 
 ## Screenshots
 
-![1](https://sine-img-bed.oss-cn-beijing.aliyuncs.com/pptx2md/pic1.png)
+<img src="https://sine-img-bed.oss-cn-beijing.aliyuncs.com/pptx2md/pic1.png" height=400 >
 
 The table of contents generated, after specifying a title list as above.
 
