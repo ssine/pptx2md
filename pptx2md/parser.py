@@ -108,6 +108,8 @@ def process_text_block(shape):
             out.put_para(text)
 
 def process_picture(shape):
+    if g.disable_image:
+        return
     global picture_count
     global out
     pic_name = g.file_prefix + str(picture_count)

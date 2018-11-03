@@ -2,22 +2,36 @@
 
 A tool to convert pptx into markdown.
 
+Current functions:
+
+* convert titles, can specify your own table of contents
+* auto recognize lists, keeps the level of the lists
+* keeps the format like bold, italic, and RGB color
+* extract pictures and automatically insert them into markdown
+
 ## Installation & Usage
 
-How to install:
+__How to install__:
 
-1. make an empty directory
-2. `git clone https://github.com/ssine/pptx2md.git`
-3. `pip install .`
-4. this directory is useless then, remove it as you like
+```sh
+pip install pptx2md
+```
 
-How to use:
+__How to use__:
 
 Once you have installed it, use the command `pptx2md [filename]` to convert pptx file into markdown.
 
-__Note.__ older .ppt files are not supported.
-
 The default output filename is `out.md`, and any pictures extracted (and inserted into .md) will be placed in `/img/` folder.
+
+__Note.__ older .ppt files are not supported, convert them to the new version first.
+
+__Upgrade & Remove__:
+
+```sh
+pip install --upgrade pptx2md
+
+pip uninstall pptx2md
+```
 
 ### Custom Titles
 
@@ -47,11 +61,12 @@ Use it as `pptx2md [filename] -t titles.txt`.
 
 ### Other Arguments
 
-* `-t` specify the title file
-* `-o` path of the output file
-* `-i` directory of the extracted pictures
-* `--image_width` the maximum width of the pictures, in px.
-* `--min_block_size` the minimum number of characters for a block to be outputted
+* `-t [filename]` specify the title file
+* `-o [filename]` path of the output file
+* `-i [path]` directory of the extracted pictures
+* `--image_width [width]` the maximum width of the pictures, in px.
+* `--disable_image` disable the image extraction.
+* `--min_block_size [size]` the minimum number of characters for a block to be outputted
 
 ## Screenshots
 

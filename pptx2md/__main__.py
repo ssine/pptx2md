@@ -28,6 +28,7 @@ arg_parser.add_argument('-t', '--title', help='path to the custom title list fil
 arg_parser.add_argument('-o', '--output', help='path of the output file')
 arg_parser.add_argument('-i', '--image_dir', help='where to put images extracted')
 arg_parser.add_argument('--image_width', help='maximum image with in px', type=int, default=500)
+arg_parser.add_argument('--disable_image', help='disable image extraction', action="store_true")
 arg_parser.add_argument('--min_block_size', help='the minimum character number of a text block to be converted', type=int, default=15)
 
 def main():
@@ -57,6 +58,9 @@ def main():
     if args.min_block_size:
         g.text_block_threshold
         g.text_block_threshold = args.min_block_size
+    
+    if args.disable_image:
+        g.disable_image = True
     
 
     prs = Presentation(file_path)
