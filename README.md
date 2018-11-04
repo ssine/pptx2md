@@ -9,6 +9,10 @@ Current functions:
 * keeps the format like bold, italic, and RGB color
 * extract pictures and automatically insert them into markdown
 
+Please star this repo if you like it!
+
+觉得好用的话麻烦点个 star 呗hhh
+
 ## Installation & Usage
 
 __How to install__:
