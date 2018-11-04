@@ -1,3 +1,4 @@
+from __future__ import print_function
 import pptx
 from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
@@ -121,8 +122,9 @@ def process_picture(shape):
         f.write(shape.image.blob)
         picture_count += 1
     if pic_ext == 'wmf':
-        Image.open(g.path_name_ext(g.img_path, pic_name, pic_ext)).save(g.path_name_ext(g.img_path, pic_name, 'png'))
-        out.put_image(g.path_name_ext(g.img_path, pic_name, 'png'), width)
+        if not g.disable_wmf:
+            Image.open(g.path_name_ext(g.img_path, pic_name, pic_ext)).save(g.path_name_ext(g.img_path, pic_name, 'png'))
+            out.put_image(g.path_name_ext(g.img_path, pic_name, 'png'), width)
     else:
         out.put_image(g.path_name_ext(g.img_path, pic_name, pic_ext), width)
 
