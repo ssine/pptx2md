@@ -70,11 +70,11 @@ Use it as `pptx2md [filename] -t titles.txt`.
 
 ## Screenshots
 
-<img src="https://sine-img-bed.oss-cn-beijing.aliyuncs.com/pptx2md/pic1.png" height=550 >
+<img src="https://raw.githubusercontent.com/ssine/image_bed/master/pic1.png" height=550 >
 
 The table of contents generated, after specifying a title list as above.
 
-![2](https://sine-img-bed.oss-cn-beijing.aliyuncs.com/pptx2md/pic2.png)
+![2](https://raw.githubusercontent.com/ssine/image_bed/master/pic2.png)
 
 * Left: source pptx file.
 * Right: generated markdown file (rendered by madoko).
