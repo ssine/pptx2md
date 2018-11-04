@@ -64,9 +64,10 @@ Use it as `pptx2md [filename] -t titles.txt`.
 * `-t [filename]` specify the title file
 * `-o [filename]` path of the output file
 * `-i [path]` directory of the extracted pictures
-* `--image_width [width]` the maximum width of the pictures, in px.
-* `--disable_image` disable the image extraction.
+* `--image_width [width]` the maximum width of the pictures, in px
+* `--disable_image` disable the image extraction
 * `--min_block_size [size]` the minimum number of characters for a block to be outputted
+* `--wiki` / `--mdk` if you happen to be using tiddlywiki of madoko, this argument outputs the corresponding language 
 
 ## Screenshots
 

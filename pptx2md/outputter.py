@@ -67,7 +67,11 @@ class md_outputter(outputter):
 
 
 class wiki_outputter(outputter):
-    # write outputs to markdown
+    # write outputs to wikitext
+    def __init__(self, file_path):
+        self.ofile = open(file_path, 'w', encoding='utf8')
+        self.esc_re = re.compile(r'<([^>]+)>')
+
     def put_title(self, text, level):
         text = text.strip()
         if fuzz.ratio(text, g.last_title.get(level, '')) < 92:
@@ -75,7 +79,7 @@ class wiki_outputter(outputter):
             g.last_title[level] = text
 
     def put_list(self, text, level):
-        self.ofile.write('*'*level + ' ' + text.strip() + '\n')
+        self.ofile.write('*'*(level+1) + ' ' + text.strip() + '\n')
         
     def put_para(self, text):
         self.ofile.write(text + '\n\n')
@@ -91,3 +95,58 @@ class wiki_outputter(outputter):
 
     def get_colored(self, text, rgb):
         return ' @@color:%s;%s@@ ' % (str(rgb), text)
+
+    def esc_repl(delf, match):
+        return "''''" + match.group(0)
+        pass
+
+    def get_escaped(self, text):
+        text = re.sub(self.esc_re, self.esc_repl, text)
+        return text
+
+
+class madoko_outputter(outputter):
+    # write outputs to madoko markdown
+    def __init__(self, file_path):
+        self.ofile = open(file_path, 'w', encoding='utf8')
+        self.ofile.write('[TOC]\n\n')
+        self.esc_re1 = re.compile(r'([\\\*`!_\{\}\[\]\(\)#\+-\.])')
+        self.esc_re2 = re.compile(r'(<[^>]+>)')
+
+    def put_title(self, text, level):
+        text = text.strip()
+        if fuzz.ratio(text, g.last_title.get(level, '')) < 92:
+            self.ofile.write('#'*level + ' ' + text + '\n\n')
+            g.last_title[level] = text
+
+    def put_list(self, text, level):
+        self.ofile.write('  '*level + '* ' + text.strip() + '\n')
+        
+    def put_para(self, text):
+        self.ofile.write(text + '\n\n')
+
+    def put_image(self, path, width):
+        if width >= 500:
+            self.ofile.write('~ Figure {caption: image caption}\n')
+            self.ofile.write('![](%s){width:%spx;}\n' % (path, width))
+            self.ofile.write('~\n\n')
+        else:
+            self.ofile.write('<img src="%s" width=%spx />\n\n' % (path, width))
+    
+    def get_accent(self, text):
+        return ' _' + text + '_ '
+    
+    def get_strong(self, text):
+        return ' __' + text + '__ '
+
+    def get_colored(self, text, rgb):
+        return ' <span style="color:#%s">%s</span> ' % (str(rgb), text)
+
+    def esc_repl(delf, match):
+        return '\\' + match.group(0)
+        pass
+
+    def get_escaped(self, text):
+        text = re.sub(self.esc_re1, self.esc_repl, text)
+        text = re.sub(self.esc_re2, self.esc_repl, text)
+        return text
