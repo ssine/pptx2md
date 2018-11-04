@@ -80,7 +80,7 @@ The table of contents generated, after specifying a title list as above.
 * Left: source pptx file.
 * Right: generated markdown file (rendered by madoko).
 
-## Detailed Parse Rules
+## Detailed Parse Rules & TODO
 
 This part will be updated later.
 
