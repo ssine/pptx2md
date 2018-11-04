@@ -15,7 +15,7 @@ Please star this repo if you like it!
 
 ## Installation & Usage
 
-__How to install__:
+### How to instal
 
 You need to have _pip_ installed on your system.
 
@@ -25,7 +25,7 @@ You need to have _pip_ installed on your system.
 pip install pptx2md
 ```
 
-__How to use__:
+### How to use
 
 Once you have installed it, use the command `pptx2md [filename]` to convert pptx file into markdown.
 
