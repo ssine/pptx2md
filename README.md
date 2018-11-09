@@ -76,7 +76,7 @@ Use it as `pptx2md [filename] -t titles.txt`.
 * `--disable_image` disable the image extraction
 * `--disable_wmf` keep wmf formatted image untouched (avoid exceptions under linux)
 * `--min_block_size [size]` the minimum number of characters for a block to be outputted
-* `--wiki` / `--mdk` if you happen to be using tiddlywiki of madoko, this argument outputs the corresponding language
+* `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding language
 
 ## Screenshots
 
