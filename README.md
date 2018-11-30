@@ -9,9 +9,13 @@ Current functions:
 * keeps the format like bold, italic, and RGB color
 * extract pictures and automatically insert them into markdown
 
+Please star this repo if you like it!
+
+觉得好用的话麻烦点个 star 呗hhh
+
 ## Installation & Usage
 
-__How to install__:
+### How to instal
 
 You need to have _pip_ installed on your system.
 
@@ -21,7 +25,7 @@ You need to have _pip_ installed on your system.
 pip install pptx2md
 ```
 
-__How to use__:
+### How to use
 
 Once you have installed it, use the command `pptx2md [filename]` to convert pptx file into markdown.
 
@@ -72,7 +76,7 @@ Use it as `pptx2md [filename] -t titles.txt`.
 * `--disable_image` disable the image extraction
 * `--disable_wmf` keep wmf formatted image untouched (avoid exceptions under linux)
 * `--min_block_size [size]` the minimum number of characters for a block to be outputted
-* `--wiki` / `--mdk` if you happen to be using tiddlywiki of madoko, this argument outputs the corresponding language
+* `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding language
 
 ## Screenshots
 
