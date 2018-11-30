@@ -65,9 +65,13 @@ def main():
     
     if args.disable_image:
         g.disable_image = True
+    else:
+        g.disable_image = False
 
     if args.disable_wmf:
         g.disable_wmf = True
+    else:
+        g.disable_wmf = False
     
 
     prs = Presentation(file_path)

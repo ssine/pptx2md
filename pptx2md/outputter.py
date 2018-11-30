@@ -94,7 +94,7 @@ class wiki_outputter(outputter):
         return ' \'\'' + text + '\'\' '
 
     def get_colored(self, text, rgb):
-        return ' @@color:%s;%s@@ ' % (str(rgb), text)
+        return ' @@color:#%s; %s @@ ' % (str(rgb), text)
 
     def esc_repl(delf, match):
         return "''''" + match.group(0)
