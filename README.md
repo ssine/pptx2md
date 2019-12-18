@@ -89,9 +89,7 @@ The table of contents generated, after specifying a title list as above.
 * Left: source pptx file.
 * Right: generated markdown file (rendered by madoko).
 
-## Detailed Parse Rules & TODO
-
-This part will be updated later.
+## Detailed Parse Rules
 
 1. 生成带有层级的列表
    * 每个para的level不同或不等于1时生成列表，否则生成段落块
@@ -103,6 +101,6 @@ This part will be updated later.
    * RGB颜色原样保留
 4. 图片转换成文件，在md中插入链接
    * 按比例缩放图片大小
-5. (可选的)将中文标点转换为英文？
+5. (可选的) 将中文标点转换为英文
 6. 解析顺序：从上至下、从左至右
 7. 源文本转义
