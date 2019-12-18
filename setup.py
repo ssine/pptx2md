@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name = 'pptx2md',
-    version = '0.7.2',
+    version = '0.7.3',
     keywords = ("pip", "pptx2md"),
     description = "convert pptx to markdown",
     long_description = "keeps the titles, formats including color, bold and italic, extracts the images",

@@ -119,11 +119,8 @@ def process_picture(shape):
     if not os.path.exists(g.img_path):
         os.makedirs(g.img_path)
 
-    file_path = ''
-
     with open(g.path_name_ext(g.img_path, pic_name, pic_ext), 'wb') as f:
         f.write(shape.image.blob)
-        file_path = os.path.abspath(f)
         picture_count += 1
     if pic_ext == 'wmf':
         if not g.disable_wmf:
