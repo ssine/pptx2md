@@ -1,5 +1,7 @@
 # PPTX2MD
 
+[![Downloads](https://pepy.tech/badge/pptx2md)](https://pepy.tech/project/pptx2md)
+
 A tool to convert pptx into markdown.
 
 Current functions:
