@@ -2,8 +2,9 @@ from pptx import Presentation
 from pptx2md.global_var import g
 import pptx2md.outputter as outputter
 from pptx2md.parser import parse
+from pptx2md.tools import fix_null_rels
 import argparse
-import os
+import os, re
 
 # initialization functions
 def prepare_titles(title_path):
@@ -73,8 +74,24 @@ def main():
     else:
         g.disable_wmf = False
     
-
-    prs = Presentation(file_path)
+    if not os.path.exists(file_path):
+        print(f'source file {file_path} not exist!')
+        print(f'(absolute path: {os.path.abspath(file_path)})')
+    try:
+        prs = Presentation(file_path)
+    except KeyError as err:
+        if len(err.args) > 0 and re.match(r'There is no item named .*NULL.* in the archive', str(err.args[0])):
+            print('corrupted links found, trying to purge...')
+            try:
+                res_path = fix_null_rels(file_path)
+                print(f'purged file saved to {res_path}.')
+                prs = Presentation(res_path)
+            except:
+                print('failed, please report this bug at https://github.com/ssine/pptx2md/issues')
+                exit(0)
+        else:
+            print('unknown error, please report this bug at https://github.com/ssine/pptx2md/issues')
+            exit(0)
     if args.wiki:
         out = outputter.wiki_outputter(out_path)
     elif args.mdk:
