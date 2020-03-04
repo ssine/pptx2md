@@ -129,6 +129,15 @@ def process_picture(shape):
     else:
         out.put_image(g.path_name_ext(g.img_path, pic_name, pic_ext), width)
 
+def ungroup_shapes(shapes):
+    res = []
+    for shape in shapes:
+        if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+            res.extend(ungroup_shapes(shape.shapes))
+        else:
+            res.append(shape)
+    return res
+
 # main
 def parse(prs, outputer):
     global out
@@ -140,7 +149,7 @@ def parse(prs, outputer):
 
         shapes = []
         try:
-            shapes = sorted(slide.shapes, key=attrgetter('top', 'left'))
+            shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
         except:
             print('Bad shapes encountered in this slide. Please check or move them and try again.')
             print('shapes:')
