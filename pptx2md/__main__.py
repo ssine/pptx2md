@@ -77,6 +77,7 @@ def main():
     if not os.path.exists(file_path):
         print(f'source file {file_path} not exist!')
         print(f'(absolute path: {os.path.abspath(file_path)})')
+        exit(0)
     try:
         prs = Presentation(file_path)
     except KeyError as err:
