@@ -18,7 +18,7 @@ setup(
     },
     install_requires = [
         'python-pptx',
-        'fuzzywuzzy',
+        'rapidfuzz',
         'pillow'
     ]
 )

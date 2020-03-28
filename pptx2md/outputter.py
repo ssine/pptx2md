@@ -1,4 +1,4 @@
-from fuzzywuzzy import fuzz
+from rapidfuzz import fuzz
 from pptx2md.global_var import g
 import re
 
@@ -34,7 +34,7 @@ class md_outputter(outputter):
 
     def put_title(self, text, level):
         text = text.strip()
-        if fuzz.ratio(text, g.last_title.get(level, '')) < 92:
+        if not fuzz.ratio(text, g.last_title.get(level, ''), score_cutoff=92):
             self.ofile.write('#'*level + ' ' + text + '\n\n')
             g.last_title[level] = text
 
@@ -74,7 +74,7 @@ class wiki_outputter(outputter):
 
     def put_title(self, text, level):
         text = text.strip()
-        if fuzz.ratio(text, g.last_title.get(level, '')) < 92:
+        if not fuzz.ratio(text, g.last_title.get(level, ''), score_cutoff=92):
             self.ofile.write('!'*level + ' ' + text + '\n\n')
             g.last_title[level] = text
 
@@ -115,7 +115,7 @@ class madoko_outputter(outputter):
 
     def put_title(self, text, level):
         text = text.strip()
-        if fuzz.ratio(text, g.last_title.get(level, '')) < 92:
+        if not fuzz.ratio(text, g.last_title.get(level, ''), score_cutoff=92):
             self.ofile.write('#'*level + ' ' + text + '\n\n')
             g.last_title[level] = text
 
