@@ -4,7 +4,7 @@ from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
 from PIL import Image
 import os
-from fuzzywuzzy import process as fuze_process
+from rapidfuzz import process as fuze_process
 from operator import attrgetter
 from pptx2md.global_var import g
 from pptx2md import global_var
@@ -79,12 +79,12 @@ def process_title(shape):
     global out
     text = shape.text_frame.text.strip()
     if g.use_custom_title:
-        res = fuze_process.extractOne(text, g.titles.keys())
-        if res[1] < 92:
+        res = fuze_process.extractOne(text, g.titles.keys(), score_cutoff=92)
+        if not res:
             g.max_custom_title
             out.put_title(text, g.max_custom_title + 1)
         else:
-            print(text, ' transferred to ', res[0], '. the ratio is ', res[1])
+            print(text, ' transferred to ', res[0], '. the ratio is ', round(res[1]))
             out.put_title(res[0], g.titles[res[0]])
     else:
         out.put_title(text, 1)
