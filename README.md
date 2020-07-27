@@ -2,40 +2,45 @@
 
 [![Downloads](https://pepy.tech/badge/pptx2md)](https://pepy.tech/project/pptx2md)
 
-A tool to convert pptx into markdown.
+A tool to convert Powerpoint pptx file into markdown.
 
-Current functions:
+Preserved formats:
 
-* convert titles, can specify your own table of contents
-* auto recognize lists, keeps the level of the lists
-* keeps the format like bold, italic, and RGB color
-* extract pictures and automatically insert them into markdown
+* Titles. Custom table of contents with fuzzy matching is supported.
+* Lists with arbitrary depth.
+* Text with bold, italic and color.
+* Pictures. They are extracted into image file and relative path is inserted.
+* Top-to-bottom then left-to-right block order.
+
+Supported output:
+
+* Markdown
+* [Tiddlywiki](https://tiddlywiki.com/)'s wikitext
+* [Madoko](https://www.madoko.net/)
 
 Please star this repo if you like it!
-
-觉得好用的话麻烦点个 star 呗hhh
 
 ## Installation & Usage
 
 ### How to instal
 
-You need to have _pip_ installed on your system.
-
-请先安装 pip 。
+You need to have _Python_ and _pip_ [installed](https://www.python.org/) on your system, then run
 
 ```sh
 pip install pptx2md
 ```
 
+in the terminal.
+
 ### How to use
 
-Once you have installed it, use the command `pptx2md [filename]` to convert pptx file into markdown.
+Once you have installed it, use the command `pptx2md [pptx filename]` to convert pptx file into markdown.
 
 The default output filename is `out.md`, and any pictures extracted (and inserted into .md) will be placed in `/img/` folder.
 
-__Note.__ older .ppt files are not supported, convert them to the new version first.
+__Note:__ older .ppt files are not supported, convert them to the new .pptx version first.
 
-__Upgrade & Remove__:
+__Upgrade & Remove:__
 
 ```sh
 pip install --upgrade pptx2md
@@ -45,9 +50,41 @@ pip uninstall pptx2md
 
 ### Custom Titles
 
-This tool can only parse all the pptx titles into level 1 md titles, in order to get a hierarchical table of contents, specify your predefined title list in a file and provide it in `-t` argument:
+By default, this tool parse all the pptx titles into level 1 markdown titles, in order to get a hierarchical table of contents, provide your predefined title list in a file and provide it with `-t` argument.
 
-This is a example title file
+This is a sample title file (titles.txt):
+
+```
+Heading 1
+  Heading 1.1
+    Heading 1.1.1
+  Heading 1.2
+  Heading 1.3
+Heading 2
+  Heading 2.1
+  Heading 2.2
+    Heading 2.1.1
+    Heading 2.1.2
+  Heading 2.3
+Heading 3
+```
+
+The first line with spaces in the begining is considered a second level heading and the number of spaces is the unit of indents. In this case, `  Heading 1.1` will be outputted as `## Heading 1.1` . As it has two spaces at the begining, 2 is the unit of heading indent, so `    Heading 1.1.1` with 4 spaces will be outputted as `### Heading 1.1.1`. Header texts are matched with fuzzy matching, unmatched pptx titles will be regarded as the deepest header.
+
+Use it with `pptx2md [filename] -t titles.txt`.
+
+### Other Arguments
+
+* `-t [filename]` provide the title file
+* `-o [filename]` path of the output file
+* `-i [path]` directory of the extracted pictures
+* `--image_width [width]` the maximum width of the pictures, in px
+* `--disable_image` disable the image extraction
+* `--disable_wmf` keep wmf formatted image untouched (avoid exceptions under linux)
+* `--min_block_size [size]` the minimum number of characters for a text block to be outputted
+* `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding markup language
+
+## Screenshots
 
 ```
 Data Link Layer Design Issues
@@ -67,24 +104,10 @@ Example Data Link Protocols
   PPP
 ```
 
-Use it as `pptx2md [filename] -t titles.txt`.
-
-### Other Arguments
-
-* `-t [filename]` specify the title file
-* `-o [filename]` path of the output file
-* `-i [path]` directory of the extracted pictures
-* `--image_width [width]` the maximum width of the pictures, in px
-* `--disable_image` disable the image extraction
-* `--disable_wmf` keep wmf formatted image untouched (avoid exceptions under linux)
-* `--min_block_size [size]` the minimum number of characters for a block to be outputted
-* `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding language
-
-## Screenshots
-
 <img src="https://raw.githubusercontent.com/ssine/image_bed/master/pic1.png" height=550 >
 
-The table of contents generated, after specifying a title list as above.
+* Top: Title list file content.
+* Bottom: The table of contents generated.
 
 ![2](https://raw.githubusercontent.com/ssine/image_bed/master/pic2.png)
 
@@ -93,16 +116,9 @@ The table of contents generated, after specifying a title list as above.
 
 ## Detailed Parse Rules
 
-1. 生成带有层级的列表
-   * 每个para的level不同或不等于1时生成列表，否则生成段落块
-2. Placeholder - TITLE 转换为md标题
-   * 可以手动指定title层级
-   * 与上一个title相同时不再重复
-3. 保留部分字体样式（红色、加粗、斜体）
-   * 主题预设样式/自带粗体斜体转换为粗体/斜体
-   * RGB颜色原样保留
-4. 图片转换成文件，在md中插入链接
-   * 按比例缩放图片大小
-5. (可选的) 将中文标点转换为英文
-6. 解析顺序：从上至下、从左至右
-7. 源文本转义
+* Lists are generated when paragraphs in a block has different level, otherwise a paragraph is generated.
+* When a title has fuzzy matching score larger than 92 with previous title, its omitted.
+* Some preset theme color style is converted into bold.
+* RGB colors are preserved.
+* Source texts are escaped.
+* Grouped shapes are flattened recursively.

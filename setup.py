@@ -9,7 +9,7 @@ setup(
     license = "MIT Licence",
     url = "https://github.com/ssine/pptx2md",
     author = "Liu Siyao",
-    author_email = "liusiyao@bupt.edu.cn",
+    author_email = "liu.siyao@qq.com",
     packages = ['pptx2md'],
     entry_points = {
         'console_scripts': [

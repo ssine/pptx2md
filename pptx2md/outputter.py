@@ -56,9 +56,8 @@ class md_outputter(outputter):
     def get_colored(self, text, rgb):
         return ' <span style="color:#%s">%s</span> ' % (str(rgb), text)
 
-    def esc_repl(delf, match):
+    def esc_repl(self, match):
         return '\\' + match.group(0)
-        pass
 
     def get_escaped(self, text):
         text = re.sub(self.esc_re1, self.esc_repl, text)
@@ -96,9 +95,8 @@ class wiki_outputter(outputter):
     def get_colored(self, text, rgb):
         return ' @@color:#%s; %s @@ ' % (str(rgb), text)
 
-    def esc_repl(delf, match):
+    def esc_repl(self, match):
         return "''''" + match.group(0)
-        pass
 
     def get_escaped(self, text):
         text = re.sub(self.esc_re, self.esc_repl, text)
@@ -142,9 +140,8 @@ class madoko_outputter(outputter):
     def get_colored(self, text, rgb):
         return ' <span style="color:#%s">%s</span> ' % (str(rgb), text)
 
-    def esc_repl(delf, match):
+    def esc_repl(self, match):
         return '\\' + match.group(0)
-        pass
 
     def get_escaped(self, text):
         text = re.sub(self.esc_re1, self.esc_repl, text)
