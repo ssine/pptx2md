@@ -19,6 +19,8 @@ class outputter(object):
         pass
     def get_colored(self, text, rgb):
         pass
+    def get_hyperlink(self, text, url):
+        pass
     def get_escaped(self, text):
         pass
     def write(self, text):
@@ -55,6 +57,9 @@ class md_outputter(outputter):
 
     def get_colored(self, text, rgb):
         return ' <span style="color:#%s">%s</span> ' % (str(rgb), text)
+
+    def get_hyperlink(self, text, url):
+        return '[' + text + '](' + url + ')'
 
     def esc_repl(self, match):
         return '\\' + match.group(0)
@@ -94,6 +99,9 @@ class wiki_outputter(outputter):
 
     def get_colored(self, text, rgb):
         return ' @@color:#%s; %s @@ ' % (str(rgb), text)
+
+    def get_hyperlink(self, text, url):
+        return '[[' + text + '|' + url + ']]'
 
     def esc_repl(self, match):
         return "''''" + match.group(0)
@@ -139,6 +147,9 @@ class madoko_outputter(outputter):
 
     def get_colored(self, text, rgb):
         return ' <span style="color:#%s">%s</span> ' % (str(rgb), text)
+
+    def get_hyperlink(self, text, url):
+        return '[' + text + '](' + url + ')'
 
     def esc_repl(self, match):
         return '\\' + match.group(0)
