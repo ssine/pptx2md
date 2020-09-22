@@ -65,6 +65,8 @@ def get_formatted_text(para):
         if text == '':
             continue
         text = out.get_escaped(text)
+        if run.hyperlink.address:
+            text = out.get_hyperlink(text, run.hyperlink.address)
         if is_accent(run.font):
             text = out.get_accent(text)
         elif is_strong(run.font):
