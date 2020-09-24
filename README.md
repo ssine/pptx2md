@@ -8,7 +8,7 @@ Preserved formats:
 
 * Titles. Custom table of contents with fuzzy matching is supported.
 * Lists with arbitrary depth.
-* Text with bold, italic and color.
+* Text with bold, italic, color and hyperlink.
 * Pictures. They are extracted into image file and relative path is inserted.
 * Top-to-bottom then left-to-right block order.
 
