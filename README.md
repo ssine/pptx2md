@@ -4,7 +4,7 @@
 
 A tool to convert Powerpoint pptx file into markdown.
 
-**Preserved formats :**
+**Preserved formats:**
 
 * Titles. Custom table of contents with fuzzy matching is supported.
 * Lists with arbitrary depth.
@@ -12,7 +12,7 @@ A tool to convert Powerpoint pptx file into markdown.
 * Pictures. They are extracted into image file and relative path is inserted.
 * Top-to-bottom then left-to-right block order.
 
-**Supported output :**
+**Supported output:**
 
 * Markdown
 * [Tiddlywiki](https://tiddlywiki.com/)'s wikitext
@@ -22,7 +22,7 @@ _Please star this repo if you like it!_
 
 ## Installation & Usage
 
-### Installation -
+### Installation
 
 You need to have _[Python](https://www.python.org/)_ and _pip_ installed on your system, then run in the terminal.
 
@@ -31,15 +31,15 @@ pip install pptx2md
 ```
 
 
-### Usage -
+### Usage
 
 Once you have installed it, use the command `pptx2md [pptx filename]` to convert _pptx file_ into markdown.
 
 The default output filename is `out.md`, and any pictures extracted (and inserted into .md) will be placed in `/img/` folder. 
 
-__Note :__ older .ppt files are not supported, convert them to the new .pptx version first.
+__Note:__ older .ppt files are not supported, convert them to the new .pptx version first.
 
-__Upgrade & Remove :__
+__Upgrade & Remove:__
 
 ```sh
 pip install --upgrade pptx2md
@@ -47,11 +47,11 @@ pip install --upgrade pptx2md
 pip uninstall pptx2md
 ```
 
-## Custom Titles : 
+## Custom Titles
 
 By default, this tool parse all the pptx titles into `level 1` markdown titles, in order to get a hierarchical table of contents, provide your predefined title list in a file and provide it with `-t` argument.
 
-This is a sample title file (titles.txt) :
+This is a sample title file (titles.txt):
 
 ```
 Heading 1
@@ -72,7 +72,7 @@ The first line with spaces in the begining is considered a second level heading 
 
 Use it with `pptx2md [filename] -t titles.txt`.
 
-## Other Arguments : 
+## Other Arguments 
 
 * `-t [filename]` provide the title file
 * `-o [filename]` path of the output file
@@ -83,7 +83,7 @@ Use it with `pptx2md [filename] -t titles.txt`.
 * `--min_block_size [size]` the minimum number of characters for a text block to be outputted
 * `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding markup language
 
-## Screenshots : 
+## Screenshots
 
 ```
 Data Link Layer Design Issues
@@ -105,15 +105,15 @@ Example Data Link Protocols
 
 <img src="https://raw.githubusercontent.com/ssine/image_bed/master/pic1.png" height=550 >
 
-* **Top** : Title list file content.
-* **Bottom** : The table of contents generated.
+* **Top**: Title list file content.
+* **Bottom**: The table of contents generated.
 
 ![2](https://raw.githubusercontent.com/ssine/image_bed/master/pic2.png)
 
-* **Left** : Source pptx file.
-* **Right** : Generated markdown file (rendered by madoko).
+* **Left**: Source pptx file.
+* **Right**: Generated markdown file (rendered by madoko).
 
-## Detailed Parse Rules : 
+## Detailed Parse Rules
 
 * Lists are generated when paragraphs in a block has different level, otherwise a paragraph is generated.
 * When a title has fuzzy matching score larger than 92 with previous title, its _omitted_.
