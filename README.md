@@ -24,7 +24,7 @@ _Please star this repo if you like it!_
 
 ### Installation
 
-You need to have _[Python](https://www.python.org/)_ and _pip_ installed on your system, then run in the terminal.
+You need to have _[Python](https://www.python.org/)_ __3.6 or newer__ and _pip_ installed on your system, then run in the terminal.
 
 ```sh
 pip install pptx2md
