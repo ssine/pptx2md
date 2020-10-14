@@ -166,5 +166,6 @@ def parse(prs, outputer):
                 process_text_block(shape)
             elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
                 process_picture(shape)
-
+    out.flush()
+    out.close()
     print('all done!')
