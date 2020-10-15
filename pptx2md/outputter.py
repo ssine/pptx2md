@@ -25,6 +25,10 @@ class outputter(object):
         pass
     def write(self, text):
         self.ofile.write(text)
+    def flush(self):
+        self.ofile.flush()
+    def close(self):
+        self.ofile.close()
 
 
 class md_outputter(outputter):
