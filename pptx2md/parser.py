@@ -130,8 +130,8 @@ def process_picture(shape):
         picture_count += 1
     if pic_ext == 'wmf':
         if not g.disable_wmf:
-            Image.open(output_path).save(g.path_name_ext(g.img_path, pic_name, 'png'))
-            out.put_image(g.path_name_ext(g.img_path, pic_name, 'png'), width)
+            Image.open(output_path).save(os.path.splitext(output_path)[0]+'.png')
+            out.put_image(os.path.splitext(img_outputter_path)[0]+'.png', width)
     else:
         out.put_image(img_outputter_path, width)
 
