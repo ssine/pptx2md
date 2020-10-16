@@ -1,4 +1,5 @@
 .pypirc
 pptx2md.egg-info/
 dist/
+build/
 publish.bat
