@@ -5,7 +5,7 @@ import os
 
 class outputter(object):
     def __init__(self, file_path):
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
         self.ofile = open(file_path, 'w', encoding='utf8')
     def put_title(self, text, level):
         pass
