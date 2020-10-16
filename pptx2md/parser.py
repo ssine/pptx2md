@@ -124,7 +124,6 @@ def process_picture(shape):
     output_path = g.path_name_ext(g.img_path, pic_name, pic_ext)
     common_path = os.path.commonpath([g.out_path, g.img_path])
     img_outputter_path = os.path.relpath(output_path, common_path)
-    print(img_outputter_path)
     with open(output_path, 'wb') as f:
         f.write(shape.image.blob)
         picture_count += 1
