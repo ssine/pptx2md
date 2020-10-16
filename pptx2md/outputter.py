@@ -1,9 +1,11 @@
 from rapidfuzz import fuzz
 from pptx2md.global_var import g
 import re
+import os
 
 class outputter(object):
     def __init__(self, file_path):
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         self.ofile = open(file_path, 'w', encoding='utf8')
     def put_title(self, text, level):
         pass
@@ -34,7 +36,7 @@ class outputter(object):
 class md_outputter(outputter):
     # write outputs to markdown
     def __init__(self, file_path):
-        self.ofile = open(file_path, 'w', encoding='utf8')
+        super().__init__(file_path)
         self.esc_re1 = re.compile(r'([\\\*`!_\{\}\[\]\(\)#\+-\.])')
         self.esc_re2 = re.compile(r'(<[^>]+>)')
 
@@ -77,7 +79,7 @@ class md_outputter(outputter):
 class wiki_outputter(outputter):
     # write outputs to wikitext
     def __init__(self, file_path):
-        self.ofile = open(file_path, 'w', encoding='utf8')
+        super().__init__(file_path)
         self.esc_re = re.compile(r'<([^>]+)>')
 
     def put_title(self, text, level):
@@ -118,7 +120,7 @@ class wiki_outputter(outputter):
 class madoko_outputter(outputter):
     # write outputs to madoko markdown
     def __init__(self, file_path):
-        self.ofile = open(file_path, 'w', encoding='utf8')
+        super().__init__(file_path)
         self.ofile.write('[TOC]\n\n')
         self.esc_re1 = re.compile(r'([\\\*`!_\{\}\[\]\(\)#\+-\.])')
         self.esc_re2 = re.compile(r'(<[^>]+>)')

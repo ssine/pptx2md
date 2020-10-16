@@ -55,6 +55,8 @@ def main():
     if args.output:
         out_path = args.output
     
+    g.out_path = out_path
+    
     if args.image_dir:
         g.img_path = args.image_dir
 

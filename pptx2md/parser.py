@@ -121,15 +121,18 @@ def process_picture(shape):
     if not os.path.exists(g.img_path):
         os.makedirs(g.img_path)
 
-    with open(g.path_name_ext(g.img_path, pic_name, pic_ext), 'wb') as f:
+    output_path = g.path_name_ext(g.img_path, pic_name, pic_ext)
+    common_path = os.path.commonpath([g.out_path, g.img_path])
+    img_outputter_path = os.path.relpath(output_path, common_path)
+    with open(output_path, 'wb') as f:
         f.write(shape.image.blob)
         picture_count += 1
     if pic_ext == 'wmf':
         if not g.disable_wmf:
-            Image.open(g.path_name_ext(g.img_path, pic_name, pic_ext)).save(g.path_name_ext(g.img_path, pic_name, 'png'))
-            out.put_image(g.path_name_ext(g.img_path, pic_name, 'png'), width)
+            Image.open(output_path).save(os.path.splitext(output_path)[0]+'.png')
+            out.put_image(os.path.splitext(img_outputter_path)[0]+'.png', width)
     else:
-        out.put_image(g.path_name_ext(g.img_path, pic_name, pic_ext), width)
+        out.put_image(img_outputter_path, width)
 
 def ungroup_shapes(shapes):
     res = []
