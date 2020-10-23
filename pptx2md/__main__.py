@@ -33,6 +33,7 @@ arg_parser.add_argument('--image_width', help='maximum image with in px', type=i
 arg_parser.add_argument('--disable_image', help='disable image extraction', action="store_true")
 arg_parser.add_argument('--disable_wmf', help='keep wmf formatted image untouched(avoid exceptions under linux)', action="store_true")
 arg_parser.add_argument('--disable_color', help='do not add color HTML tags', action="store_true")
+arg_parser.add_argument('--disable_escaping', help='do not attempt to escape special characters', action="store_true")
 arg_parser.add_argument('--wiki', help='generate output as wikitext(TiddlyWiki)', action="store_true")
 arg_parser.add_argument('--mdk', help='generate output as madoko markdown', action="store_true")
 arg_parser.add_argument('--min_block_size', help='the minimum character number of a text block to be converted', type=int, default=15)
@@ -81,6 +82,11 @@ def main():
         g.disable_color = True
     else:
         g.disable_color = False
+
+    if args.disable_escaping:
+        g.disable_escaping = True
+    else:
+        g.disable_escaping = False
 
     if not os.path.exists(file_path):
         print(f'source file {file_path} not exist!')
