@@ -21,7 +21,10 @@ g.out_path = 'out.md'
 g.text_block_threshold = 15
 # disable image extraction
 g.disable_image = False
-
+# prevent adding html tags with colors
+g.disable_color = False
+# prevent escaping of characters
+g.disable_escaping = False
 
 # global variables
 g.titles = {}

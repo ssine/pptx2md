@@ -64,15 +64,20 @@ def get_formatted_text(para):
         text = run.text.strip()
         if text == '':
             continue
-        text = out.get_escaped(text)
-        if run.hyperlink.address:
-            text = out.get_hyperlink(text, run.hyperlink.address)
+        if not g.disable_escaping:
+            text = out.get_escaped(text)
+        try:
+            if run.hyperlink.address:
+                text = out.get_hyperlink(text, run.hyperlink.address)
+        except:
+            text = out.get_hyperlink(text, 'error:ppt-link-parsing-issue')
         if is_accent(run.font):
             text = out.get_accent(text)
         elif is_strong(run.font):
             text = out.get_strong(text)
-        if run.font.color.type == MSO_COLOR_TYPE.RGB:
-            text = out.get_colored(text, run.font.color.rgb)
+        if not g.disable_color:
+            if run.font.color.type == MSO_COLOR_TYPE.RGB:
+                text = out.get_colored(text, run.font.color.rgb)
         res += text
     return res.strip()
 
