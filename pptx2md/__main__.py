@@ -46,7 +46,7 @@ def main():
         g.use_custom_title
         prepare_titles(args.title)
         g.use_custom_title = True
-    
+
     if args.wiki:
         out_path = 'out.tid'
     else:
@@ -54,18 +54,19 @@ def main():
 
     if args.output:
         out_path = args.output
-    
-    g.out_path = out_path
-    
+
+    g.out_path = os.path.abspath(out_path)
+    g.img_path = os.path.abspath(os.path.join(out_path, '../img'))
+
     if args.image_dir:
         g.img_path = args.image_dir
 
     if args.image_width:
         g.max_img_width = args.image_width
-    
+
     if args.min_block_size:
         g.text_block_threshold = args.min_block_size
-    
+
     if args.disable_image:
         g.disable_image = True
     else:
@@ -75,7 +76,7 @@ def main():
         g.disable_wmf = True
     else:
         g.disable_wmf = False
-    
+
     if not os.path.exists(file_path):
         print(f'source file {file_path} not exist!')
         print(f'(absolute path: {os.path.abspath(file_path)})')
