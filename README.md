@@ -79,6 +79,7 @@ Use it with `pptx2md [filename] -t titles.txt`.
 * `-i [path]` directory of the extracted pictures
 * `--image_width [width]` the maximum width of the pictures, in px
 * `--disable_image` disable the image extraction
+* `--disable_escaping` do not attempt to escape special characters
 * `--disable_wmf` keep wmf formatted image untouched (avoid exceptions under linux)
 * `--min_block_size [size]` the minimum number of characters for a text block to be outputted
 * `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding markup language
