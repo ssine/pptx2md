@@ -58,10 +58,12 @@ def main():
         out_path = args.output
 
     g.out_path = os.path.abspath(out_path)
-    g.img_path = os.path.abspath(os.path.join(out_path, '../img'))
+    g.img_path = os.path.join(out_path, '../img')
 
     if args.image_dir:
         g.img_path = args.image_dir
+
+    g.img_path = os.path.abspath(g.img_path)
 
     if args.image_width:
         g.max_img_width = args.image_width
