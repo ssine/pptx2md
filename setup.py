@@ -6,6 +6,7 @@ setup(
     keywords = ["pip", "pptx2md"],
     description = "convert pptx to markdown",
     long_description = "keeps the titles, formats including color, bold and italic, extracts the images",
+    long_description_content_type="text/markdown",
     license = "MIT Licence",
     url = "https://github.com/ssine/pptx2md",
     author = "Liu Siyao",
