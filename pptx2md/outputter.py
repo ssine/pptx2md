@@ -2,6 +2,7 @@ from rapidfuzz import fuzz
 from pptx2md.global_var import g
 import re
 import os
+import urllib.parse
 
 class outputter(object):
     def __init__(self, file_path):
@@ -13,7 +14,7 @@ class outputter(object):
         pass
     def put_para(self, text):
         pass
-    def put_image(self, path, width):
+    def put_image(self, path, max_width):
         pass
     def get_accent(self, text):
         pass
@@ -52,8 +53,11 @@ class md_outputter(outputter):
     def put_para(self, text):
         self.ofile.write(text + '\n\n')
 
-    def put_image(self, path, width):
-        self.ofile.write('<img src="%s" width=%spx />\n\n' % (path, width))
+    def put_image(self, path, max_width=None):
+        if max_width is None:
+            self.ofile.write(f'![]({urllib.parse.quote(path)})\n\n')
+        else:
+            self.ofile.write(f'<img src="{path}" style="max-width:{max_width}px;" />\n\n')
     
     def get_accent(self, text):
         return ' _' + text + '_ '
@@ -94,8 +98,11 @@ class wiki_outputter(outputter):
     def put_para(self, text):
         self.ofile.write(text + '\n\n')
 
-    def put_image(self, path, width):
-        self.ofile.write('<img src="%s" width=%spx />\n\n' % (path, width))
+    def put_image(self, path, max_width):
+        if max_width is None:
+            self.ofile.write(f'<img src="{path}" />\n\n')
+        else:
+            self.ofile.write(f'<img src="{path}" width={max_width}px />\n\n')
     
     def get_accent(self, text):
         return ' __' + text + '__ '
@@ -137,13 +144,15 @@ class madoko_outputter(outputter):
     def put_para(self, text):
         self.ofile.write(text + '\n\n')
 
-    def put_image(self, path, width):
-        if width >= 500:
-            self.ofile.write('~ Figure {caption: image caption}\n')
-            self.ofile.write('![](%s){width:%spx;}\n' % (path, width))
-            self.ofile.write('~\n\n')
+    def put_image(self, path, max_width):
+        if max_width is None:
+            self.ofile.write(f'<img src="{path}" />\n\n')
+        elif max_width < 500:
+            self.ofile.write(f'<img src="{path}" width={max_width}px />\n\n')
         else:
-            self.ofile.write('<img src="%s" width=%spx />\n\n' % (path, width))
+            self.ofile.write('~ Figure {caption: image caption}\n')
+            self.ofile.write('![](%s){width:%spx;}\n' % (path, max_width))
+            self.ofile.write('~\n\n')
     
     def get_accent(self, text):
         return ' _' + text + '_ '

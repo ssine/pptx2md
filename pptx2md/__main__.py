@@ -29,7 +29,7 @@ arg_parser.add_argument('pptx_path', help='path to the pptx file to be converted
 arg_parser.add_argument('-t', '--title', help='path to the custom title list file')
 arg_parser.add_argument('-o', '--output', help='path of the output file')
 arg_parser.add_argument('-i', '--image_dir', help='where to put images extracted')
-arg_parser.add_argument('--image_width', help='maximum image with in px', type=int, default=500)
+arg_parser.add_argument('--image_width', help='maximum image with in px', type=int)
 arg_parser.add_argument('--disable_image', help='disable image extraction', action="store_true")
 arg_parser.add_argument('--disable_wmf', help='keep wmf formatted image untouched(avoid exceptions under linux)', action="store_true")
 arg_parser.add_argument('--disable_color', help='do not add color HTML tags', action="store_true")

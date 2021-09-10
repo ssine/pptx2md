@@ -122,7 +122,6 @@ def process_picture(shape):
     global out
     pic_name = g.file_prefix + str(picture_count)
     pic_ext = shape.image.ext
-    width = min(shape.image.size[0], g.max_img_width)
     if not os.path.exists(g.img_path):
         os.makedirs(g.img_path)
 
@@ -137,7 +136,7 @@ def process_picture(shape):
             Image.open(output_path).save(os.path.splitext(output_path)[0]+'.png')
             out.put_image(os.path.splitext(img_outputter_path)[0]+'.png', width)
     else:
-        out.put_image(img_outputter_path, width)
+        out.put_image(img_outputter_path, g.max_img_width)
 
 def ungroup_shapes(shapes):
     res = []

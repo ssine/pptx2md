@@ -12,7 +12,7 @@ g = global_var()
 # image output dir
 g.img_path = 'img'
 # maximum image width
-g.max_img_width = 500
+g.max_img_width = None
 # weather use predefined TOC in titles.txt
 g.use_custom_title = False
 # output path & filename
