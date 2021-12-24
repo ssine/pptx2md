@@ -138,6 +138,12 @@ def process_picture(shape):
     else:
         out.put_image(img_outputter_path, g.max_img_width)
 
+def process_table(shape):
+    global out
+    table = [[cell.text for cell in row.cells] for row in shape.table.rows]
+    if len(table) > 0:
+        out.put_table(table)
+
 def ungroup_shapes(shapes):
     res = []
     for shape in shapes:
@@ -173,5 +179,7 @@ def parse(prs, outputer):
                 process_text_block(shape)
             elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
                 process_picture(shape)
+            elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
+                process_table(shape)
     out.close()
     print('all done!')

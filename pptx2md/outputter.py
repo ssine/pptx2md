@@ -16,6 +16,8 @@ class outputter(object):
         pass
     def put_image(self, path, max_width):
         pass
+    def put_table(self, table):
+        pass
     def get_accent(self, text):
         pass
     def get_strong(self, text):
@@ -58,7 +60,13 @@ class md_outputter(outputter):
             self.ofile.write(f'![]({urllib.parse.quote(path)})\n\n')
         else:
             self.ofile.write(f'<img src="{path}" style="max-width:{max_width}px;" />\n\n')
-    
+
+    def put_table(self, table):
+        gen_table_row = lambda row: '| ' + ' | '.join([c.replace('\n', '<br />') for c in row]) + ' |'
+        self.ofile.write(gen_table_row(table[0]) + '\n')
+        self.ofile.write(gen_table_row([':-:' for _ in table[0]]) + '\n')
+        self.ofile.write('\n'.join([gen_table_row(row) for row in table[1:]]) + '\n\n')
+
     def get_accent(self, text):
         return ' _' + text + '_ '
     
