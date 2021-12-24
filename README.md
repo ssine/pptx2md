@@ -10,6 +10,7 @@ A tool to convert Powerpoint pptx file into markdown.
 * Lists with arbitrary depth.
 * Text with **bold**, _italic_, color and [hyperlink](https://github.com/ssine/pptx2md/blob/master/README.md)
 * Pictures. They are extracted into image file and relative path is inserted.
+* Tables with merged cells.
 * Top-to-bottom then left-to-right block order.
 
 **Supported output:**
