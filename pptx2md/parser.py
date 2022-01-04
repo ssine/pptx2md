@@ -61,7 +61,7 @@ def is_strong(font):
 def get_formatted_text(para):
     res = ''
     for run in para.runs:
-        text = run.text.strip()
+        text = run.text
         if text == '':
             continue
         if not g.disable_escaping:
