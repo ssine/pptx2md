@@ -184,8 +184,7 @@ def parse(prs, outputer):
   global out
   out = outputer
   notes = []
-  for idx, slide in enumerate(tqdm(prs.slides)):
-
+  for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
     shapes = []
     try:
       shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
