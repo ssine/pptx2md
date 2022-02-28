@@ -6,11 +6,13 @@ from PIL import Image
 import os
 from rapidfuzz import process as fuze_process
 from operator import attrgetter
+
+from tqdm import tqdm
 from pptx2md.global_var import g
 from pptx2md import global_var
 
 picture_count = 0
-slide_count = 0
+
 global out
 
 
@@ -84,8 +86,9 @@ def get_formatted_text(para):
   return res.strip()
 
 
-def process_title(shape):
+def process_title(shape, slide_idx):
   global out
+  notes = []
   text = shape.text_frame.text.strip()
   if g.use_custom_title:
     res = fuze_process.extractOne(text, g.titles.keys(), score_cutoff=92)
@@ -93,13 +96,15 @@ def process_title(shape):
       g.max_custom_title
       out.put_title(text, g.max_custom_title + 1)
     else:
-      print(text, ' transferred to ', res[0], '. the ratio is ', round(res[1]))
+      notes.append(f'Title in slide {slide_idx} "{text}" is converted to "{res[0]}" as specified in title file.')
       out.put_title(res[0], g.titles[res[0]])
   else:
     out.put_title(text, 1)
 
+  return notes
 
-def process_text_block(shape):
+
+def process_text_block(shape, _):
   global out
   if is_list_block(shape):
     # generate list block
@@ -116,13 +121,16 @@ def process_text_block(shape):
         continue
       text = get_formatted_text(para)
       out.put_para(text)
+  return []
 
 
-def process_picture(shape):
+def process_picture(shape, slide_idx):
+  notes = []
   if g.disable_image:
-    return
+    return notes
   global picture_count
   global out
+
   pic_name = g.file_prefix + str(picture_count)
   pic_ext = shape.image.ext
   if not os.path.exists(g.img_path):
@@ -134,19 +142,31 @@ def process_picture(shape):
   with open(output_path, 'wb') as f:
     f.write(shape.image.blob)
     picture_count += 1
-  if pic_ext == 'wmf':
-    if not g.disable_wmf:
-      Image.open(output_path).save(os.path.splitext(output_path)[0] + '.png')
-      out.put_image(os.path.splitext(img_outputter_path)[0] + '.png', g.max_img_width)
-  else:
+
+  # normal images
+  if pic_ext != 'wmf':
     out.put_image(img_outputter_path, g.max_img_width)
+    return notes
+
+  # wmf images, try to convert, if failed, output as original
+  try:
+    Image.open(output_path).save(os.path.splitext(output_path)[0] + '.png')
+    out.put_image(os.path.splitext(img_outputter_path)[0] + '.png', g.max_img_width)
+    notes.append(f'Image {output_path} in slide {slide_idx} converted to png.')
+  except Exception as e:
+    notes.append(
+        f'Cannot convert wmf image {output_path} in slide {slide_idx} to png, this probably won\'t be displayed correctly.'
+    )
+    out.put_image(img_outputter_path, g.max_img_width)
+  return notes
 
 
-def process_table(shape):
+def process_table(shape, _):
   global out
   table = [[cell.text for cell in row.cells] for row in shape.table.rows]
   if len(table) > 0:
     out.put_table(table)
+  return []
 
 
 def ungroup_shapes(shapes):
@@ -163,10 +183,8 @@ def ungroup_shapes(shapes):
 def parse(prs, outputer):
   global out
   out = outputer
-  for slide in prs.slides:
-    global slide_count
-    slide_count += 1
-    print('processing slide %d...' % slide_count)
+  notes = []
+  for idx, slide in enumerate(tqdm(prs.slides)):
 
     shapes = []
     try:
@@ -180,12 +198,16 @@ def parse(prs, outputer):
 
     for shape in shapes:
       if is_title(shape):
-        process_title(shape)
+        notes += process_title(shape, idx + 1)
       elif is_text_block(shape):
-        process_text_block(shape)
+        notes += process_text_block(shape, idx + 1)
       elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
-        process_picture(shape)
+        notes += process_picture(shape, idx + 1)
       elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
-        process_table(shape)
+        notes += process_table(shape, idx + 1)
   out.close()
-  print('all done!')
+
+  if len(notes) > 0:
+    print('Process finished with notice:')
+    for note in notes:
+      print(note)

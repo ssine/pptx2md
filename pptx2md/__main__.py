@@ -26,28 +26,30 @@ def prepare_titles(title_path):
           g.max_custom_title = max([g.max_custom_title, cnt // indent + 1])
 
 
-arg_parser = argparse.ArgumentParser(description='Convert pptx to markdown')
-arg_parser.add_argument('pptx_path', help='path to the pptx file to be converted')
-arg_parser.add_argument('-t', '--title', help='path to the custom title list file')
-arg_parser.add_argument('-o', '--output', help='path of the output file')
-arg_parser.add_argument('-i', '--image-dir', help='where to put images extracted')
-arg_parser.add_argument('--image-width', help='maximum image with in px', type=int)
-arg_parser.add_argument('--disable-image', help='disable image extraction', action="store_true")
-arg_parser.add_argument('--disable-wmf',
-                        help='keep wmf formatted image untouched(avoid exceptions under linux)',
-                        action="store_true")
-arg_parser.add_argument('--disable-color', help='do not add color HTML tags', action="store_true")
-arg_parser.add_argument('--disable-escaping', help='do not attempt to escape special characters', action="store_true")
-arg_parser.add_argument('--wiki', help='generate output as wikitext(TiddlyWiki)', action="store_true")
-arg_parser.add_argument('--mdk', help='generate output as madoko markdown', action="store_true")
-arg_parser.add_argument('--min-block-size',
-                        help='the minimum character number of a text block to be converted',
-                        type=int,
-                        default=15)
+def parse_args():
+  arg_parser = argparse.ArgumentParser(description='Convert pptx to markdown')
+  arg_parser.add_argument('pptx_path', help='path to the pptx file to be converted')
+  arg_parser.add_argument('-t', '--title', help='path to the custom title list file')
+  arg_parser.add_argument('-o', '--output', help='path of the output file')
+  arg_parser.add_argument('-i', '--image-dir', help='where to put images extracted')
+  arg_parser.add_argument('--image-width', help='maximum image with in px', type=int)
+  arg_parser.add_argument('--disable-image', help='disable image extraction', action="store_true")
+  arg_parser.add_argument('--disable-wmf',
+                          help='keep wmf formatted image untouched(avoid exceptions under linux)',
+                          action="store_true")
+  arg_parser.add_argument('--disable-color', help='do not add color HTML tags', action="store_true")
+  arg_parser.add_argument('--disable-escaping', help='do not attempt to escape special characters', action="store_true")
+  arg_parser.add_argument('--wiki', help='generate output as wikitext(TiddlyWiki)', action="store_true")
+  arg_parser.add_argument('--mdk', help='generate output as madoko markdown', action="store_true")
+  arg_parser.add_argument('--min-block-size',
+                          help='the minimum character number of a text block to be converted',
+                          type=int,
+                          default=15)
+  return arg_parser.parse_args()
 
 
 def main():
-  args = arg_parser.parse_args()
+  args = parse_args()
 
   file_path = args.pptx_path
   g.file_prefix = ''.join(os.path.basename(file_path).split('.')[:-1])
@@ -101,7 +103,7 @@ def main():
 
   if not os.path.exists(file_path):
     print(f'source file {file_path} not exist!')
-    print(f'(absolute path: {os.path.abspath(file_path)})')
+    print(f'absolute path: {os.path.abspath(file_path)}')
     exit(0)
   try:
     prs = Presentation(file_path)
