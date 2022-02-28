@@ -14,6 +14,7 @@ python = ">=3.7,<3.10"
 python-pptx = ">=0.6.18"
 rapidfuzz = ">=0.10.0"
 Pillow = ">=6.0.0"
+tqdm = ">=4"
 
 [tool.poetry.dev-dependencies]
 yapf = ">=0.28.0"
@@ -21,3 +22,6 @@ yapf = ">=0.28.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.yapf]
+column_limit = 120
