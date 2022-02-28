@@ -2,4 +2,5 @@
 pptx2md.egg-info/
 dist/
 build/
+.venv/
 publish.bat
