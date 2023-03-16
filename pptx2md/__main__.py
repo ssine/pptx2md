@@ -1,3 +1,5 @@
+import collections 
+import collections.abc
 from pptx import Presentation
 from pptx2md.global_var import g
 import pptx2md.outputter as outputter

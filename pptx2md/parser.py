@@ -1,4 +1,7 @@
 from __future__ import print_function
+
+import collections 
+import collections.abc
 import pptx
 from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
