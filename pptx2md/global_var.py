@@ -34,3 +34,5 @@ g.file_prefix = '1'
 
 g.last_title = {}
 g.max_custom_title = 1
+
+g.page = None

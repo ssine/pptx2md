@@ -47,6 +47,7 @@ def parse_args():
                           help='the minimum character number of a text block to be converted',
                           type=int,
                           default=15)
+  arg_parser.add_argument("--page", help="only convert the specified page", type=int, default=None)
   return arg_parser.parse_args()
 
 
@@ -102,6 +103,9 @@ def main():
     g.disable_escaping = True
   else:
     g.disable_escaping = False
+
+  if args.page:
+    g.page = args.page
 
   if not os.path.exists(file_path):
     print(f'source file {file_path} not exist!')
