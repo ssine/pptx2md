@@ -188,6 +188,8 @@ def parse(prs, outputer):
   out = outputer
   notes = []
   for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
+    if g.page is not None and idx + 1 != g.page:
+        continue
     shapes = []
     try:
       shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
