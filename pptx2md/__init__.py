@@ -42,6 +42,7 @@ def convert(
     wiki: bool = False,  # generate output as wikitext(TiddlyWiki)
     mdk: bool = False,  # generate output as madoko markdown
     min_block_size: int = 15,  # the minimum character number of a text block to be converted
+    page: Union[int, None] = None # only convert the specified page 
 ):
 
     file_path = pptx_path
@@ -93,6 +94,9 @@ def convert(
         g.disable_escaping = True
     else:
         g.disable_escaping = False
+
+    if page is not None:
+        g.page = page
 
     if not os.path.exists(file_path):
         print(f"source file {file_path} not exist!")
