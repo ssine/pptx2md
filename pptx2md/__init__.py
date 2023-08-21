@@ -39,6 +39,7 @@ def convert(
     disable_wmf: bool = False,  # keep wmf formatted image untouched(avoid exceptions under linux)
     disable_color: bool = False,  # do not add color HTML tags
     disable_escaping: bool = False,  # do not attempt to escape special characters
+    disable_notes: bool = False,  # do not add presenter notes
     wiki: bool = False,  # generate output as wikitext(TiddlyWiki)
     mdk: bool = False,  # generate output as madoko markdown
     min_block_size: int = 15,  # the minimum character number of a text block to be converted
@@ -94,6 +95,11 @@ def convert(
         g.disable_escaping = True
     else:
         g.disable_escaping = False
+
+    if disable_notes:
+        g.disable_notes = True
+    else:
+        g.disable_notes = False
 
     if page is not None:
         g.page = page

@@ -127,6 +127,13 @@ def process_text_block(shape, _):
   return []
 
 
+def process_notes(text, _):
+  global out
+  out.put_para('---')
+  out.put_para(text)
+  return []
+
+
 def process_picture(shape, slide_idx):
   notes = []
   if g.disable_image:
@@ -209,6 +216,10 @@ def parse(prs, outputer):
         notes += process_picture(shape, idx + 1)
       elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
         notes += process_table(shape, idx + 1)
+    if not g.disable_notes and slide.has_notes_slide:
+      text = slide.notes_slide.notes_text_frame.text
+      if text:
+        notes += process_notes(text, idx + 1)
   out.close()
 
   if len(notes) > 0:

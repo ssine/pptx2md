@@ -27,6 +27,7 @@ g.disable_image = False
 g.disable_color = False
 # prevent escaping of characters
 g.disable_escaping = False
+g.disable_notes = False
 
 # global variables
 g.titles = {}
