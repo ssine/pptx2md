@@ -42,6 +42,7 @@ def parse_args():
   arg_parser.add_argument('--disable-color', help='do not add color HTML tags', action="store_true")
   arg_parser.add_argument('--disable-escaping', help='do not attempt to escape special characters', action="store_true")
   arg_parser.add_argument('--disable-notes', help='do not add presenter notes', action="store_true")
+  arg_parser.add_argument('--enable-slides', help='deliniate slides `\n---\n`', action="store_true")
   arg_parser.add_argument('--wiki', help='generate output as wikitext(TiddlyWiki)', action="store_true")
   arg_parser.add_argument('--mdk', help='generate output as madoko markdown', action="store_true")
   arg_parser.add_argument('--min-block-size',
@@ -109,6 +110,11 @@ def main():
     g.disable_notes = True
   else:
     g.disable_notes = False
+
+  if args.enable_slides:
+    g.enable_slides = True
+  else:
+    g.enable_slides = False
 
   if args.page:
     g.page = args.page

@@ -220,6 +220,8 @@ def parse(prs, outputer):
       text = slide.notes_slide.notes_text_frame.text
       if text:
         notes += process_notes(text, idx + 1)
+    if idx < len(prs.slides)-1 and g.enable_slides:
+        out.put_para("\n---\n")
   out.close()
 
   if len(notes) > 0:
