@@ -40,6 +40,7 @@ def convert(
     disable_color: bool = False,  # do not add color HTML tags
     disable_escaping: bool = False,  # do not attempt to escape special characters
     disable_notes: bool = False,  # do not add presenter notes
+    enable_slides: bool = False,  # add slide deliniation
     wiki: bool = False,  # generate output as wikitext(TiddlyWiki)
     mdk: bool = False,  # generate output as madoko markdown
     min_block_size: int = 15,  # the minimum character number of a text block to be converted
@@ -101,6 +102,10 @@ def convert(
     else:
         g.disable_notes = False
 
+    if enable_slides:
+        g.enable_slides = True
+    else:
+        g.enable_slides = False
     if page is not None:
         g.page = page
 

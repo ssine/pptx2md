@@ -82,6 +82,7 @@ Use it with `pptx2md [filename] -t titles.txt`.
 * `--disable-escaping` do not attempt to escape special characters
 * `--disable-wmf` keep wmf formatted image untouched (avoid exceptions under linux)
 * `--disable-color` disable color tags in HTML
+* `--enable-slides` deliniate slides `\n---\n`, this can help if you want to convert pptx slides to markdown slides
 * `--min-block-size [size]` the minimum number of characters for a text block to be outputted
 * `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding markup language
 

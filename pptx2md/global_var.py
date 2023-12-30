@@ -28,6 +28,7 @@ g.disable_color = False
 # prevent escaping of characters
 g.disable_escaping = False
 g.disable_notes = False
+g.enable_slides = False
 
 # global variables
 g.titles = {}
