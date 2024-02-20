@@ -129,8 +129,14 @@ def process_text_block(shape, _):
 
 def process_notes(text, _):
   global out
-  out.put_para('---')
-  out.put_para(text)
+  if(isinstance(out, outputter.quarto_outputter)):
+    out.put_para("::: {.notes}")
+    out.put_para(text)
+    out.put_para(":::")
+  else:
+    out.put_para('---')
+    out.put_para(text)
+
   return []
 
 
