@@ -203,7 +203,15 @@ def parse(prs, outputer):
   global out
   out = outputer
   notes = []
+
+  print("Iniciando")
+
+  # if(isinstance(out, outputter.quarto_outputter)):
+  # Adding inclusion of header for the first slide
+  out.put_header()
+
   for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
+  # for idx, slide in enumerate(prs.slides):
     if g.page is not None and idx + 1 != g.page:
         continue
     shapes = []

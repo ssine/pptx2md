@@ -11,6 +11,9 @@ class outputter(object):
     os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
     self.ofile = open(file_path, 'w', encoding='utf8')
 
+  def put_header(self):
+    pass
+
   def put_title(self, text, level):
     pass
 
@@ -205,6 +208,22 @@ class quarto_outputter(outputter):
     self.esc_re1 = re.compile(r'([\\\*`!_\{\}\[\]\(\)#\+-\.])')
     self.esc_re2 = re.compile(r'(<[^>]+>)')
 
+  def put_header(self):
+    self.ofile.write('''---
+title: "Presentation Title"
+author: "Author"
+format: 
+  revealjs:
+    slide-number: c/t
+    width: 1600
+    height: 900
+    logo: img/logo.png
+    footer: "Organization"
+    incremental: true
+    theme: [simple, custom.scss]
+---
+''')
+    
   def put_title(self, text, level):
     text = text.strip()
     if not fuzz.ratio(text, g.last_title.get(level, ''), score_cutoff=92):
