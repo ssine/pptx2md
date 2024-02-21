@@ -14,6 +14,8 @@ from tqdm import tqdm
 from pptx2md.global_var import g
 from pptx2md import global_var
 
+import pptx2md.outputter as outputter
+
 picture_count = 0
 
 global out
@@ -130,6 +132,7 @@ def process_text_block(shape, _):
 def process_notes(text, _):
   global out
   if(isinstance(out, outputter.quarto_outputter)):
+    
     out.put_para("::: {.notes}")
     out.put_para(text)
     out.put_para(":::")
