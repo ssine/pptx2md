@@ -87,6 +87,8 @@ Use it with `pptx2md [filename] -t titles.txt`.
 * `--min-block-size [size]` the minimum number of characters for a text block to be outputted
 * `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding markup language
 
+Note: install [wand](https://docs.wand-py.org/en/0.6.12/) for better chance of successfully converting wmf images, if needed.
+
 ## Screenshots
 
 ```

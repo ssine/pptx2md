@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import collections 
+import collections
 import collections.abc
 import pptx
 from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
@@ -160,12 +160,20 @@ def process_picture(shape, slide_idx):
 
   # wmf images, try to convert, if failed, output as original
   try:
-    Image.open(output_path).save(os.path.splitext(output_path)[0] + '.png')
-    out.put_image(os.path.splitext(img_outputter_path)[0] + '.png', g.max_img_width)
-    notes.append(f'Image {output_path} in slide {slide_idx} converted to png.')
+    try:
+      Image.open(output_path).save(os.path.splitext(output_path)[0] + '.png')
+      out.put_image(os.path.splitext(img_outputter_path)[0] + '.png', g.max_img_width)
+      notes.append(f'Image {output_path} in slide {slide_idx} converted to png.')
+    except Exception:  # Image failed, try another
+      from wand.image import Image
+      with Image(filename=output_path) as img:
+        img.format = 'png'
+        img.save(filename=os.path.splitext(output_path)[0] + '.png')
+      out.put_image(os.path.splitext(img_outputter_path)[0] + '.png', g.max_img_width)
+      notes.append(f'Image {output_path} in slide {slide_idx} converted to png111.')
   except Exception as e:
     notes.append(
-        f'Cannot convert wmf image {output_path} in slide {slide_idx} to png, this probably won\'t be displayed correctly.'
+        f'Cannot convert image {output_path} in slide {slide_idx} to png, this probably won\'t be displayed correctly.'
     )
     out.put_image(img_outputter_path, g.max_img_width)
   return notes
@@ -216,6 +224,15 @@ def parse(prs, outputer):
         notes += process_picture(shape, idx + 1)
       elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
         notes += process_table(shape, idx + 1)
+      else:
+        if hasattr(shape, "placeholder_format"):
+          ph = shape.placeholder_format
+          if ph.type == PP_PLACEHOLDER.OBJECT and hasattr(shape, "image") and getattr(shape, "image"):
+            notes += process_picture(shape, idx + 1)
+          else:
+            print(f"Unrecognized shape: {shape.shape_type}, place holder: {ph.type}, place at page: {idx + 1}")
+        else:
+          print(f"Unrecognized shape: {shape.shape_type}, place at page: {idx + 1}")
     if not g.disable_notes and slide.has_notes_slide:
       text = slide.notes_slide.notes_text_frame.text
       if text:
