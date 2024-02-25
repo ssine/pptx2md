@@ -190,10 +190,13 @@ def process_table(shape, _):
 def ungroup_shapes(shapes):
   res = []
   for shape in shapes:
-    if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
-      res.extend(ungroup_shapes(shape.shapes))
-    else:
-      res.append(shape)
+    try:
+      if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+        res.extend(ungroup_shapes(shape.shapes))
+      else:
+        res.append(shape)
+    except Exception as e:
+      print(f'failed to load shape {shape}, skipped. error: {e}')
   return res
 
 
@@ -211,9 +214,12 @@ def parse(prs, outputer):
     except:
       print('Bad shapes encountered in this slide. Please check or move them and try again.')
       print('shapes:')
-      for sp in slide.shapes:
-        print(sp.shape_type)
-        print(sp.top, sp.left, sp.width, sp.height)
+      try:
+        for sp in slide.shapes:
+          print(sp.shape_type)
+          print(sp.top, sp.left, sp.width, sp.height)
+      except:
+        print('failed to print all bad shapes.')
 
     for shape in shapes:
       if is_title(shape):
