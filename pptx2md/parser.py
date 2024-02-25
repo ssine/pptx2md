@@ -227,7 +227,10 @@ def parse(prs, outputer):
       elif is_text_block(shape):
         notes += process_text_block(shape, idx + 1)
       elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
-        notes += process_picture(shape, idx + 1)
+        try:
+          notes += process_picture(shape, idx + 1)
+        except AttributeError as e:
+          print(f'Failed to process picture, skipped: {e}')
       elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
         notes += process_table(shape, idx + 1)
       else:
