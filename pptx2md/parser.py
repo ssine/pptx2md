@@ -234,14 +234,12 @@ def parse(prs, outputer):
       elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
         notes += process_table(shape, idx + 1)
       else:
-        if hasattr(shape, "placeholder_format"):
+        try:
           ph = shape.placeholder_format
           if ph.type == PP_PLACEHOLDER.OBJECT and hasattr(shape, "image") and getattr(shape, "image"):
             notes += process_picture(shape, idx + 1)
-          else:
-            print(f"Unrecognized shape: {shape.shape_type}, place holder: {ph.type}, place at page: {idx + 1}")
-        else:
-          print(f"Unrecognized shape: {shape.shape_type}, place at page: {idx + 1}")
+        except:
+          pass
     if not g.disable_notes and slide.has_notes_slide:
       text = slide.notes_slide.notes_text_frame.text
       if text:
