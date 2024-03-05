@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import collections 
+import collections
 import collections.abc
 import pptx
 from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
@@ -169,12 +169,20 @@ def process_picture(shape, slide_idx):
 
   # wmf images, try to convert, if failed, output as original
   try:
-    Image.open(output_path).save(os.path.splitext(output_path)[0] + '.png')
-    out.put_image(os.path.splitext(img_outputter_path)[0] + '.png', g.max_img_width)
-    notes.append(f'Image {output_path} in slide {slide_idx} converted to png.')
+    try:
+      Image.open(output_path).save(os.path.splitext(output_path)[0] + '.png')
+      out.put_image(os.path.splitext(img_outputter_path)[0] + '.png', g.max_img_width)
+      notes.append(f'Image {output_path} in slide {slide_idx} converted to png.')
+    except Exception:  # Image failed, try another
+      from wand.image import Image
+      with Image(filename=output_path) as img:
+        img.format = 'png'
+        img.save(filename=os.path.splitext(output_path)[0] + '.png')
+      out.put_image(os.path.splitext(img_outputter_path)[0] + '.png', g.max_img_width)
+      notes.append(f'Image {output_path} in slide {slide_idx} converted to png111.')
   except Exception as e:
     notes.append(
-        f'Cannot convert wmf image {output_path} in slide {slide_idx} to png, this probably won\'t be displayed correctly.'
+        f'Cannot convert image {output_path} in slide {slide_idx} to png, this probably won\'t be displayed correctly.'
     )
     out.put_image(img_outputter_path, g.max_img_width)
   return notes
@@ -191,10 +199,13 @@ def process_table(shape, _):
 def ungroup_shapes(shapes):
   res = []
   for shape in shapes:
-    if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
-      res.extend(ungroup_shapes(shape.shapes))
-    else:
-      res.append(shape)
+    try:
+      if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+        res.extend(ungroup_shapes(shape.shapes))
+      else:
+        res.append(shape)
+    except Exception as e:
+      print(f'failed to load shape {shape}, skipped. error: {e}')
   return res
 
 
@@ -220,9 +231,12 @@ def parse(prs, outputer):
     except:
       print('Bad shapes encountered in this slide. Please check or move them and try again.')
       print('shapes:')
-      for sp in slide.shapes:
-        print(sp.shape_type)
-        print(sp.top, sp.left, sp.width, sp.height)
+      try:
+        for sp in slide.shapes:
+          print(sp.shape_type)
+          print(sp.top, sp.left, sp.width, sp.height)
+      except:
+        print('failed to print all bad shapes.')
 
     for shape in shapes:
       if is_title(shape):
@@ -230,9 +244,19 @@ def parse(prs, outputer):
       elif is_text_block(shape):
         notes += process_text_block(shape, idx + 1)
       elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
-        notes += process_picture(shape, idx + 1)
+        try:
+          notes += process_picture(shape, idx + 1)
+        except AttributeError as e:
+          print(f'Failed to process picture, skipped: {e}')
       elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
         notes += process_table(shape, idx + 1)
+      else:
+        try:
+          ph = shape.placeholder_format
+          if ph.type == PP_PLACEHOLDER.OBJECT and hasattr(shape, "image") and getattr(shape, "image"):
+            notes += process_picture(shape, idx + 1)
+        except:
+          pass
     if not g.disable_notes and slide.has_notes_slide:
       text = slide.notes_slide.notes_text_frame.text
       if text:

@@ -7,6 +7,7 @@ from pptx2md.parser import parse
 from pptx2md.tools import fix_null_rels
 import argparse
 import os, re
+import sys
 
 
 # initialization functions
@@ -125,7 +126,7 @@ def main():
   if not os.path.exists(file_path):
     print(f'source file {file_path} not exist!')
     print(f'absolute path: {os.path.abspath(file_path)}')
-    exit(0)
+    sys.exit(1)
   try:
     prs = Presentation(file_path)
   except KeyError as err:
@@ -137,10 +138,10 @@ def main():
         prs = Presentation(res_path)
       except:
         print('failed, please report this bug at https://github.com/ssine/pptx2md/issues')
-        exit(0)
+        sys.exit(1)
     else:
       print('unknown error, please report this bug at https://github.com/ssine/pptx2md/issues')
-      exit(0)
+      sys.exit(1)
   if args.wiki:
     out = outputter.wiki_outputter(out_path)
   elif args.mdk:

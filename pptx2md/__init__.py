@@ -1,6 +1,7 @@
 import collections
 import collections.abc
 import os
+import sys
 from typing import Union
 
 from pptx import Presentation
@@ -112,7 +113,7 @@ def convert(
     if not os.path.exists(file_path):
         print(f"source file {file_path} not exist!")
         print(f"absolute path: {os.path.abspath(file_path)}")
-        exit(0)
+        sys.exit(1)
     prs = Presentation(file_path)
     if wiki:
         out = outputter.wiki_outputter(out_path)
