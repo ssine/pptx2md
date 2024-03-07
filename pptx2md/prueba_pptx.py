@@ -5,7 +5,8 @@ from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
 
 
-file_path = "C:/Users/daedr/Documents/Docencia_UIS/david_2022/recursos_docencia2022ii/sitio/original/3_SimDigital_28.03.2023.pptx"
+# file_path = "C:/Users/daedr/Documents/Docencia_UIS/david_2022/recursos_docencia2022ii/sitio/original/3_SimDigital_28.03.2023.pptx"
+file_path = "/home/daedro/Documentos/Dev2024/github_repos/derb_site/original/Simulacion/3_SimDigital_28.03.2023.pptx"
 
 prs = Presentation(file_path)
 total_slides = len(prs.slides)
@@ -22,7 +23,7 @@ def is_two_column_text(slide):
 
 for slide_number, slide in enumerate(prs.slides, start=1):
     layout = slide.slide_layout
-    print("---")
+    print("\n---")
     print("Slide %d uses layout: %s"%(slide_number, layout.name))
 
     if is_two_column_text(slide):
