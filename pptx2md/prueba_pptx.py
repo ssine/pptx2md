@@ -3,6 +3,7 @@ import pptx
 from pptx import Presentation
 from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
+from pptx.util import Length
 
 import matplotlib.pyplot as plt
 
@@ -32,8 +33,8 @@ def is_two_column_text(slide):
             
             if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or shape.has_text_frame:
                 centroid_x = shape.left + shape.width / 2
-                all_mu.append(centroid_x)
-                all_sigma.append(shape.width/4)
+                all_mu.append(Length(centroid_x).mm)
+                all_sigma.append(Length(shape.width/4).mm)
 
             
 
@@ -52,7 +53,12 @@ prs = Presentation(file_path)
 total_slides = len(prs.slides)
 print('Total number of slides: %d'%total_slides)
 
-slide_width_emus = prs.slide_width
+
+slide_width = pptx.util.Length(prs.slide_width)
+slide_width_emus = slide_width.emu
+slide_width_mm = slide_width.mm
+
+all_output = list()
 
 for slide_number, slide in enumerate(prs.slides, start=1):
     layout = slide.slide_layout
@@ -62,24 +68,35 @@ for slide_number, slide in enumerate(prs.slides, start=1):
     output = is_two_column_text(slide)
     print(output)
         
-
     # if is_two_column_text(slide):
     #     print("Slide %d migh have two-column text layout"%slide_number)
     # else:
     #     print("No two column text layout for Slide %d"%slide_number)
 
+    all_output.append(output)
+        
 
 
+t_vector = np.arange(1, slide_width_mm)
 
-t_vector = np.arange(1, slide_width_emus)
-salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), output[0], output[1])
 
-# TODO: Agregar código para realizar suma de las gaussianas!!
-# TODO: Posteriormente hay que implementar modelo gmm e inferir cantidad de gaussianas
+all_result = list()
 
-final = list(salida)[0]
-plt.plot(t_vector, final)
+for slide_number, output in enumerate(all_output, start=1):
+    if output:
+        salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), output[0], output[1])
+        result = np.sum(list(salida), axis=0)
+        all_result.append(result)
+
+        plt.subplot(7, 2, slide_number)
+        plt.plot(t_vector, result)
+        plt.title('Slide %d'%slide_number)
+
 plt.show()
+
+# Por cada gaussiana. Generar 30 datos. Posteriormente ver si es posible realizar reconstrucción con un ¿error inferior al 90% en el area? Es necesario hacer gmm? revisar...
+# Simplemente necesito minimizar error para definir si son menos columnas que el número de shapes!!
+
 
 # plt.plot(t_vector, normal_pdf(t_vector))
 # plt.show()
