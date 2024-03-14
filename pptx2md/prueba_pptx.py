@@ -58,6 +58,8 @@ slide_width = pptx.util.Length(prs.slide_width)
 slide_width_emus = slide_width.emu
 slide_width_mm = slide_width.mm
 
+print("Slide width in mm: %d"%slide_width_mm)
+
 all_output = list()
 
 for slide_number, slide in enumerate(prs.slides, start=1):
