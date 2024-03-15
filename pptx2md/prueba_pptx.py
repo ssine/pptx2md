@@ -1,19 +1,16 @@
 import pptx
-
 from pptx import Presentation
 from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
 from pptx.util import Length
 
 import matplotlib.pyplot as plt
-
 import numpy as np
 
+from utils_optim import normal_pdf, f_gauss1, f_gauss2, f_gauss3, fit_column_model
 
-
-
-def normal_pdf(x_vector, mu=0, sigma=1):
-    return (1/(sigma*np.sqrt(2*np.pi)))*np.exp(-((x_vector - mu)/sigma)**2/2)
+# def normal_pdf(x_vector, mu=0, sigma=1):
+#     return (1/(sigma*np.sqrt(2*np.pi)))*np.exp(-((x_vector - mu)/sigma)**2/2)
 
 
 def is_two_column_text(slide):
@@ -46,8 +43,8 @@ def is_two_column_text(slide):
     else:
         return False
 
-# file_path = "C:/Users/daedr/Documents/Docencia_UIS/david_2022/recursos_docencia2022ii/sitio/original/3_SimDigital_28.03.2023.pptx"
-file_path = "/home/daedro/Documentos/Dev2024/github_repos/derb_site/original/Simulacion/3_SimDigital_28.03.2023.pptx"
+file_path = "C:/Users/daedr/Documents/Docencia_UIS/david_2022/recursos_docencia2022ii/sitio/original/3_SimDigital_28.03.2023.pptx"
+# file_path = "/home/daedro/Documentos/Dev2024/github_repos/derb_site/original/Simulacion/3_SimDigital_28.03.2023.pptx"
 
 prs = Presentation(file_path)
 total_slides = len(prs.slides)
@@ -86,13 +83,22 @@ all_result = list()
 
 for slide_number, output in enumerate(all_output, start=1):
     if output:
+        print("---")
+        print("Slide %d"%slide_number)
         salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), output[0], output[1])
-        result = np.sum(list(salida), axis=0)
+        result = np.mean(list(salida), axis=0)
         all_result.append(result)
 
-        plt.subplot(7, 2, slide_number)
+        parameters = fit_column_model(t_vector, result)
+
+        # Pendiente: Graficar curvas optimas junto con pdfs de los shapes
+        # Asignar shape a columnas
+        # Realizar conversion a qmd
+
+        plt.subplot(5, 3, slide_number)
         plt.plot(t_vector, result)
         plt.title('Slide %d'%slide_number)
+        plt.xlabel(np.array2string(parameters))
 
 plt.show()
 
