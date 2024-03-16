@@ -7,11 +7,25 @@ from pptx.util import Length
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils_optim import normal_pdf, f_gauss1, f_gauss2, f_gauss3, fit_column_model
+from operator import attrgetter
+
+from utils_optim import normal_pdf, f_gauss1, f_gauss2, f_gauss3, fit_column_model, compute_pdf_overlap
 
 # def normal_pdf(x_vector, mu=0, sigma=1):
 #     return (1/(sigma*np.sqrt(2*np.pi)))*np.exp(-((x_vector - mu)/sigma)**2/2)
 
+
+def ungroup_shapes(shapes):
+  res = []
+  for shape in shapes:
+    try:
+      if shape.shape_type == MSO_SHAPE_TYPE.GROUP:
+        res.extend(ungroup_shapes(shape.shapes))
+      else:
+        res.append(shape)
+    except Exception as e:
+      print(f'failed to load shape {shape}, skipped. error: {e}')
+  return res
 
 def is_two_column_text(slide):
 
@@ -31,7 +45,7 @@ def is_two_column_text(slide):
             if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or shape.has_text_frame:
                 centroid_x = shape.left + shape.width / 2
                 all_mu.append(Length(centroid_x).mm)
-                all_sigma.append(Length(shape.width/4).mm)
+                all_sigma.append(Length(shape.width/4).mm) # Gaussiana - 2sigma
 
             
 
@@ -42,6 +56,70 @@ def is_two_column_text(slide):
         return (all_mu, all_sigma)
     else:
         return False
+
+def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
+    
+    shapes_dict = {
+        "shapes_pre":list(), 
+        "shapes_l":list(), 
+        "shapes_c":list(), 
+        "shapes_r":list()
+    }
+
+    shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
+
+    if ncols ==1:
+        dict_shapes["shapes_pre"]= shapes
+        return dict_shapes
+    elif ncols==2:
+        param_means = params[0:2]
+        param_sds = params[2:]
+    elif ncols==3:
+        param_means = params[0:3]
+        param_sds = params[3:]
+    else:
+        raise(ValueError, "Numero de columnas no apropiado")
+    
+
+    
+
+    x_vector = np.arange(1, slide_width_mm)
+
+    for shape in slide.shapes:
+        if shape.shape_type == MSO_SHAPE_TYPE.PLACEHOLDER:
+            if shape.placeholder_format.type == PP_PLACEHOLDER.TITLE:
+                if shape.has_text_frame:
+                    print('SLIDE TITLE: %s'%shape.text_frame.text)
+            shapes_dict["shapes_pre"].append(shape)
+            continue
+        
+        if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or shape.has_text_frame:
+            centroid_x = shape.left + shape.width / 2
+            curr_mu = Length(centroid_x).mm
+            curr_sigma = Length(shape.width/4).mm # Gaussiana - 2sigma
+
+            area_u_c = np.zeros(ncols)
+
+            for idx, param_mu in enumerate(param_means):
+                area_u_c[idx] = compute_pdf_overlap(normal_pdf(x_vector, mu=param_mu, sigma=param_sds[idx]), 
+                                                    normal_pdf(x_vector, curr_mu, curr_sigma))
+                
+            max_score_column = np.argmax(area_u_c)
+
+            # TODO: Corregir asignación a las columnas. 
+            if max_score_column==0:
+                shapes_dict["shapes_l"].append(shape)
+            elif max_score_column==1:
+                shapes_dict["shapes_c"].append(shape)
+            elif max_score_column==2:
+                shapes_dict["shapes_r"].append(shape)
+            else:
+                raise(ValueError, "Valor maximo no corresponde a ninguna columna")      
+    return(shapes_dict)
+
+
+# def 
+
 
 file_path = "C:/Users/daedr/Documents/Docencia_UIS/david_2022/recursos_docencia2022ii/sitio/original/3_SimDigital_28.03.2023.pptx"
 # file_path = "/home/daedro/Documentos/Dev2024/github_repos/derb_site/original/Simulacion/3_SimDigital_28.03.2023.pptx"
@@ -77,8 +155,6 @@ for slide_number, slide in enumerate(prs.slides, start=1):
 
 
 t_vector = np.arange(1, slide_width_mm)
-
-
 all_result = list()
 
 for slide_number, output in enumerate(all_output, start=1):
@@ -91,20 +167,25 @@ for slide_number, output in enumerate(all_output, start=1):
 
         parameters = fit_column_model(t_vector, result)
 
-        # Pendiente: Graficar curvas optimas junto con pdfs de los shapes
-        # Asignar shape a columnas
-        # Realizar conversion a qmd
+        dict_shapes = assign_shapes(prs.slides[slide_number-1], parameters, int(len(parameters)/2), slide_width_mm=slide_width_mm)
+
+        print(dict_shapes)
+
+        # [x] TODO: Graficar curvas optimas junto con pdfs de los shapes
+        # TODO: Asignar shapes a columnas
+        # TODO: Realizar conversion a qmd
 
         plt.subplot(5, 3, slide_number)
         plt.plot(t_vector, result)
         plt.title('Slide %d'%slide_number)
+
+        if len(parameters)==2:
+            plt.plot(t_vector, f_gauss1(t_vector, *parameters), linestyle="dashed")
+        elif len(parameters)==4:
+            plt.plot(t_vector, f_gauss2(t_vector, *parameters), linestyle="dashed")
+        elif len(parameters)==6:
+            plt.plot(t_vector, f_gauss3(t_vector, *parameters), linestyle="dashed")
+
         plt.xlabel(np.array2string(parameters))
 
 plt.show()
-
-# Por cada gaussiana. Generar 30 datos. Posteriormente ver si es posible realizar reconstrucción con un ¿error inferior al 90% en el area? Es necesario hacer gmm? revisar...
-# Simplemente necesito minimizar error para definir si son menos columnas que el número de shapes!!
-
-
-# plt.plot(t_vector, normal_pdf(t_vector))
-# plt.show()
