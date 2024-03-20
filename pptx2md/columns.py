@@ -29,17 +29,17 @@ def ungroup_shapes(shapes):
 
 def is_two_column_text(slide):
 
-    text_title = 0
+    # text_title = 0
 
     if  slide.slide_layout.name != "TITLE":
         all_mu = list()
         all_sigma = list()
-        for shape in slide.shapes:
+        for shape in sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left')):
             if shape.shape_type == MSO_SHAPE_TYPE.PLACEHOLDER:
                 if shape.placeholder_format.type == PP_PLACEHOLDER.TITLE:
                     if shape.has_text_frame:
                         print('SLIDE TITLE: %s'%shape.text_frame.text)
-                        text_title = 1
+                        # text_title = 1
                     continue
             
             if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or shape.has_text_frame:
@@ -47,12 +47,10 @@ def is_two_column_text(slide):
                 all_mu.append(Length(centroid_x).mm)
                 all_sigma.append(Length(shape.width/4).mm) # Gaussiana - 2sigma
 
-            
-
-        text_shapes = [shape for shape in slide.shapes if hasattr(shape, 'text_frame') and shape.text_frame]
-        fig_shapes = [shape for shape in slide.shapes if (getattr(shape, 'shape_type')==MSO_SHAPE_TYPE.PICTURE)]
-        print("Cantidad text shapes: %d"%(len(text_shapes) - text_title))
-        print("Cantidad fig shapes: %d"%len(fig_shapes))
+        # text_shapes = [shape for shape in slide.shapes if hasattr(shape, 'text_frame') and shape.text_frame]
+        # fig_shapes = [shape for shape in slide.shapes if (getattr(shape, 'shape_type')==MSO_SHAPE_TYPE.PICTURE)]
+        # print("Cantidad text shapes: %d"%(len(text_shapes) - text_title))
+        # print("Cantidad fig shapes: %d"%len(fig_shapes))
         return (all_mu, all_sigma)
     else:
         return False
@@ -68,9 +66,11 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
 
     shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
 
-    if ncols ==1:
-        dict_shapes["shapes_pre"]= shapes
-        return dict_shapes
+    print("Ncols is %d"%ncols)
+
+    if ncols==1:
+        shapes_dict["shapes_pre"]= shapes
+        return(shapes_dict)
     elif ncols==2:
         param_means = params[0:2]
         param_sds = params[2:]
@@ -80,9 +80,6 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
     else:
         raise(ValueError, "Numero de columnas no apropiado")
     
-
-    
-
     x_vector = np.arange(1, slide_width_mm)
 
     for shape in slide.shapes:
@@ -90,8 +87,8 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
             if shape.placeholder_format.type == PP_PLACEHOLDER.TITLE:
                 if shape.has_text_frame:
                     print('SLIDE TITLE: %s'%shape.text_frame.text)
-            shapes_dict["shapes_pre"].append(shape)
-            continue
+                shapes_dict["shapes_pre"].append(shape)
+                continue
         
         if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or shape.has_text_frame:
             centroid_x = shape.left + shape.width / 2
@@ -106,28 +103,29 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
                 
             max_score_column = np.argmax(area_u_c)
 
-            # TODO: Corregir asignación a las columnas. 
+            # [x] TODO: Corregir asignación a las columnas. 
             if max_score_column==0:
                 shapes_dict["shapes_l"].append(shape)
             elif max_score_column==1:
-                shapes_dict["shapes_c"].append(shape)
+                if ncols == 2:
+                    shapes_dict["shapes_r"].append(shape)
+                elif ncols == 3:
+                    shapes_dict["shapes_c"].append(shape)
+                else:
+                    raise(ValueError, "Valor erroneo del número de columnas")
             elif max_score_column==2:
                 shapes_dict["shapes_r"].append(shape)
             else:
                 raise(ValueError, "Valor maximo no corresponde a ninguna columna")      
     return(shapes_dict)
 
-
 # def 
-
-
 file_path = "C:/Users/daedr/Documents/Docencia_UIS/david_2022/recursos_docencia2022ii/sitio/original/3_SimDigital_28.03.2023.pptx"
 # file_path = "/home/daedro/Documentos/Dev2024/github_repos/derb_site/original/Simulacion/3_SimDigital_28.03.2023.pptx"
 
 prs = Presentation(file_path)
 total_slides = len(prs.slides)
 print('Total number of slides: %d'%total_slides)
-
 
 slide_width = pptx.util.Length(prs.slide_width)
 slide_width_emus = slide_width.emu
@@ -152,8 +150,6 @@ for slide_number, slide in enumerate(prs.slides, start=1):
 
     all_output.append(output)
         
-
-
 t_vector = np.arange(1, slide_width_mm)
 all_result = list()
 

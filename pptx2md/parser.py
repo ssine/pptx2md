@@ -5,6 +5,9 @@ import collections.abc
 import pptx
 from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
+from pptx.util import Length
+
+
 from PIL import Image
 import os
 from rapidfuzz import process as fuze_process
@@ -15,6 +18,9 @@ from pptx2md.global_var import g
 from pptx2md import global_var
 
 import pptx2md.outputter as outputter
+
+from columns import is_two_column_text, assign_shapes
+
 
 picture_count = 0
 
@@ -269,3 +275,81 @@ def parse(prs, outputer):
     print('Process finished with notice:')
     for note in notes:
       print(note)
+
+
+# TODO: Finalizar parse alternativo para archivos qmd
+def parse_alt(prs, outputer):
+  global out
+  out = outputer
+  notes = []
+
+  slide_width = pptx.util.Length(prs.slide_width)
+  slide_width_mm = slide_width.mm
+
+  print("Starting convertion")
+
+  # if(isinstance(out, outputter.quarto_outputter)):
+  # Adding inclusion of header for the first slide
+  out.put_header()
+
+  for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
+  # for idx, slide in enumerate(prs.slides):
+    if g.page is not None and idx + 1 != g.page:
+        continue
+    shapes = []
+    try:
+      shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
+    except:
+      print('Bad shapes encountered in this slide. Please check or move them and try again.')
+      print('shapes:')
+      try:
+        for sp in slide.shapes:
+          print(sp.shape_type)
+          print(sp.top, sp.left, sp.width, sp.height)
+      except:
+        print('failed to print all bad shapes.')
+
+    pdf_modelo = is_two_column_text(slide)
+    
+    if(pdf_modelo):
+      salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), output[0], output[1])
+      sum_of_gaussian = np.mean(list(salida), axis=0)
+      parameters = fit_column_model(t_vector, sum_of_gaussian)
+
+      dict_shapes = assign_shapes(prs.slides[slide_number-1], parameters, int(len(parameters)/2), slide_width_mm=slide_width_mm)
+
+    # t_vector = np.arange(1, slide_width_mm)
+
+    for shape in shapes:
+      if is_title(shape):
+        notes += process_title(shape, idx + 1)
+      elif is_text_block(shape):
+        notes += process_text_block(shape, idx + 1)
+      elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
+        try:
+          notes += process_picture(shape, idx + 1)
+        except AttributeError as e:
+          print(f'Failed to process picture, skipped: {e}')
+      elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
+        notes += process_table(shape, idx + 1)
+      else:
+        try:
+          ph = shape.placeholder_format
+          if ph.type == PP_PLACEHOLDER.OBJECT and hasattr(shape, "image") and getattr(shape, "image"):
+            notes += process_picture(shape, idx + 1)
+        except:
+          pass
+    if not g.disable_notes and slide.has_notes_slide:
+      text = slide.notes_slide.notes_text_frame.text
+      if text:
+        notes += process_notes(text, idx + 1)
+    if idx < len(prs.slides)-1 and g.enable_slides:
+        out.put_para("\n---\n")
+  out.close()
+
+  if len(notes) > 0:
+    print('Process finished with notice:')
+    for note in notes:
+      print(note)
+
+
