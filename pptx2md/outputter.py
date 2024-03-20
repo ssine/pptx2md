@@ -209,7 +209,8 @@ class quarto_outputter(outputter):
     self.esc_re2 = re.compile(r'(<[^>]+>)')
 
   def put_header(self):
-    self.ofile.write('''---
+    self.ofile.write('''
+---
 title: "Presentation Title"
 author: "Author"
 format: 

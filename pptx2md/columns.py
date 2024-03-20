@@ -9,7 +9,7 @@ import numpy as np
 
 from operator import attrgetter
 
-from utils_optim import normal_pdf, f_gauss1, f_gauss2, f_gauss3, fit_column_model, compute_pdf_overlap
+from pptx2md.utils_optim import normal_pdf, f_gauss1, f_gauss2, f_gauss3, fit_column_model, compute_pdf_overlap
 
 # def normal_pdf(x_vector, mu=0, sigma=1):
 #     return (1/(sigma*np.sqrt(2*np.pi)))*np.exp(-((x_vector - mu)/sigma)**2/2)
@@ -120,68 +120,70 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
     return(shapes_dict)
 
 # def 
-file_path = "C:/Users/daedr/Documents/Docencia_UIS/david_2022/recursos_docencia2022ii/sitio/original/3_SimDigital_28.03.2023.pptx"
-# file_path = "/home/daedro/Documentos/Dev2024/github_repos/derb_site/original/Simulacion/3_SimDigital_28.03.2023.pptx"
 
-prs = Presentation(file_path)
-total_slides = len(prs.slides)
-print('Total number of slides: %d'%total_slides)
+if __name__ == "__main__":
 
-slide_width = pptx.util.Length(prs.slide_width)
-slide_width_emus = slide_width.emu
-slide_width_mm = slide_width.mm
+    file_path = "/home/daedro/Documentos/Dev2024/github_repos/derb_site/original/Simulacion/3_SimDigital_28.03.2023.pptx"
 
-print("Slide width in mm: %d"%slide_width_mm)
+    prs = Presentation(file_path)
+    total_slides = len(prs.slides)
+    print('Total number of slides: %d'%total_slides)
 
-all_output = list()
+    slide_width = pptx.util.Length(prs.slide_width)
+    slide_width_emus = slide_width.emu
+    slide_width_mm = slide_width.mm
 
-for slide_number, slide in enumerate(prs.slides, start=1):
-    layout = slide.slide_layout
-    print("\n---")
-    print("Slide %d uses layout: %s"%(slide_number, layout.name))
+    print("Slide width in mm: %d"%slide_width_mm)
 
-    output = is_two_column_text(slide)
-    print(output)
-        
-    # if is_two_column_text(slide):
-    #     print("Slide %d migh have two-column text layout"%slide_number)
-    # else:
-    #     print("No two column text layout for Slide %d"%slide_number)
+    all_output = list()
 
-    all_output.append(output)
-        
-t_vector = np.arange(1, slide_width_mm)
-all_result = list()
+    for slide_number, slide in enumerate(prs.slides, start=1):
+        layout = slide.slide_layout
+        print("\n---")
+        print("Slide %d uses layout: %s"%(slide_number, layout.name))
 
-for slide_number, output in enumerate(all_output, start=1):
-    if output:
-        print("---")
-        print("Slide %d"%slide_number)
-        salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), output[0], output[1])
-        result = np.mean(list(salida), axis=0)
-        all_result.append(result)
+        output = is_two_column_text(slide)
+        print(output)
+            
+        # if is_two_column_text(slide):
+        #     print("Slide %d migh have two-column text layout"%slide_number)
+        # else:
+        #     print("No two column text layout for Slide %d"%slide_number)
 
-        parameters = fit_column_model(t_vector, result)
+        all_output.append(output)
+            
+    t_vector = np.arange(1, slide_width_mm)
+    all_result = list()
 
-        dict_shapes = assign_shapes(prs.slides[slide_number-1], parameters, int(len(parameters)/2), slide_width_mm=slide_width_mm)
+    for slide_number, output in enumerate(all_output, start=1):
+        if output:
+            print("---")
+            print("Slide %d"%slide_number)
+            salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), output[0], output[1])
+            result = np.mean(list(salida), axis=0)
+            all_result.append(result)
 
-        print(dict_shapes)
+            parameters = fit_column_model(t_vector, result)
 
-        # [x] TODO: Graficar curvas optimas junto con pdfs de los shapes
-        # TODO: Asignar shapes a columnas
-        # TODO: Realizar conversion a qmd
+            dict_shapes = assign_shapes(prs.slides[slide_number-1], parameters, int(len(parameters)/2), slide_width_mm=slide_width_mm)
 
-        plt.subplot(5, 3, slide_number)
-        plt.plot(t_vector, result)
-        plt.title('Slide %d'%slide_number)
+            print(dict_shapes)
 
-        if len(parameters)==2:
-            plt.plot(t_vector, f_gauss1(t_vector, *parameters), linestyle="dashed")
-        elif len(parameters)==4:
-            plt.plot(t_vector, f_gauss2(t_vector, *parameters), linestyle="dashed")
-        elif len(parameters)==6:
-            plt.plot(t_vector, f_gauss3(t_vector, *parameters), linestyle="dashed")
+            # [x] TODO: Graficar curvas optimas junto con pdfs de los shapes
+            # TODO: Asignar shapes a columnas
+            # TODO: Realizar conversion a qmd
 
-        plt.xlabel(np.array2string(parameters))
+            plt.subplot(5, 3, slide_number)
+            plt.plot(t_vector, result)
+            plt.title('Slide %d'%slide_number)
 
-plt.show()
+            if len(parameters)==2:
+                plt.plot(t_vector, f_gauss1(t_vector, *parameters), linestyle="dashed")
+            elif len(parameters)==4:
+                plt.plot(t_vector, f_gauss2(t_vector, *parameters), linestyle="dashed")
+            elif len(parameters)==6:
+                plt.plot(t_vector, f_gauss3(t_vector, *parameters), linestyle="dashed")
+
+            plt.xlabel(np.array2string(parameters))
+
+    plt.show()

@@ -3,7 +3,7 @@ import collections.abc
 from pptx import Presentation
 from pptx2md.global_var import g
 import pptx2md.outputter as outputter
-from pptx2md.parser import parse
+from pptx2md.parser import parse, parse_alt
 from pptx2md.tools import fix_null_rels
 import argparse
 import os, re
@@ -150,7 +150,9 @@ def main():
     out = outputter.quarto_outputter(out_path)
   else:
     out = outputter.md_outputter(out_path)
-  parse(prs, out)
+  # parse(prs, out)
+  
+  parse_alt(prs, out)
 
 
 if __name__ == '__main__':

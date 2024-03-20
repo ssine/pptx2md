@@ -7,6 +7,7 @@ from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
 from pptx.util import Length
 
+import numpy as np
 
 from PIL import Image
 import os
@@ -19,7 +20,9 @@ from pptx2md import global_var
 
 import pptx2md.outputter as outputter
 
-from columns import is_two_column_text, assign_shapes
+from pptx2md.columns import is_two_column_text, assign_shapes
+
+from pptx2md.utils_optim import normal_pdf, fit_column_model
 
 
 picture_count = 0
@@ -286,6 +289,8 @@ def parse_alt(prs, outputer):
   slide_width = pptx.util.Length(prs.slide_width)
   slide_width_mm = slide_width.mm
 
+  t_vector = np.arange(1, slide_width_mm)
+
   print("Starting convertion")
 
   # if(isinstance(out, outputter.quarto_outputter)):
@@ -312,13 +317,17 @@ def parse_alt(prs, outputer):
     pdf_modelo = is_two_column_text(slide)
     
     if(pdf_modelo):
-      salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), output[0], output[1])
+      salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), pdf_modelo[0], pdf_modelo[1])
       sum_of_gaussian = np.mean(list(salida), axis=0)
       parameters = fit_column_model(t_vector, sum_of_gaussian)
 
-      dict_shapes = assign_shapes(prs.slides[slide_number-1], parameters, int(len(parameters)/2), slide_width_mm=slide_width_mm)
+      dict_shapes = assign_shapes(slide, parameters, int(len(parameters)/2), slide_width_mm=slide_width_mm)
+      # dict_shapes['shapes_pre']
+      shapes = dict_shapes['shapes_pre']
 
     # t_vector = np.arange(1, slide_width_mm)
+
+    print(shapes)
 
     for shape in shapes:
       if is_title(shape):
