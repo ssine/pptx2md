@@ -218,6 +218,31 @@ def ungroup_shapes(shapes):
   return res
 
 
+
+def process_shapes(current_shapes, slide_id):
+      local_notes = []
+      for shape in current_shapes:
+        if is_title(shape):
+          local_notes += process_title(shape, slide_id + 1)
+        elif is_text_block(shape):
+          local_notes += process_text_block(shape, slide_id + 1)
+        elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
+          try:
+            local_notes += process_picture(shape, slide_id + 1)
+          except AttributeError as e:
+            print(f'Failed to process picture, skipped: {e}')
+        elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
+          local_notes += process_table(shape, slide_id + 1)
+        else:
+          try:
+            ph = shape.placeholder_format
+            if ph.type == PP_PLACEHOLDER.OBJECT and hasattr(shape, "image") and getattr(shape, "image"):
+              local_notes += process_picture(shape, slide_id + 1)
+          except:
+            pass
+
+        return(local_notes)
+
 # main
 def parse(prs, outputer):
   global out
@@ -321,33 +346,63 @@ def parse_alt(prs, outputer):
       sum_of_gaussian = np.mean(list(salida), axis=0)
       parameters = fit_column_model(t_vector, sum_of_gaussian)
 
-      dict_shapes = assign_shapes(slide, parameters, int(len(parameters)/2), slide_width_mm=slide_width_mm)
+      num_cols = int(len(parameters)/2)
+
+      dict_shapes = assign_shapes(slide, parameters, num_cols, slide_width_mm=slide_width_mm)
+      print("Cantidad de elementos")
+      print("pre: %d"%len(dict_shapes["shapes_pre"]))
+      print("l: %d"%len(dict_shapes["shapes_l"]))
+      print("c: %d"%len(dict_shapes["shapes_c"]))
+      print("r: %d"%len(dict_shapes["shapes_r"]))
+            
       # dict_shapes['shapes_pre']
-      shapes = dict_shapes['shapes_pre']
+      #shapes = dict_shapes['shapes_pre']
+      # t_vector = np.arange(1, slide_width_mm)
+      #print(shapes)
+      # Modificar for
+      notes.extend(process_shapes(dict_shapes["shapes_pre"], idx))
+      if num_cols == 1:
+        pass
+        # notes.extend(process_shapes(dict_shapes["shapes_l"], idx))
+      elif num_cols == 2:
+        out.put_para(':::: {.columns}')
 
-    # t_vector = np.arange(1, slide_width_mm)
+        out.put_para('::: {.column width="50%"}')
+        notes.extend(process_shapes(dict_shapes["shapes_l"], idx))
+        out.put_para(':::')
+        out.put_para('::: {.column width="50%"}')
+        notes.extend(process_shapes(dict_shapes["shapes_r"], idx))
+        out.put_para(':::')
+        out.put_para('::::')
 
-    print(shapes)
 
-    for shape in shapes:
-      if is_title(shape):
-        notes += process_title(shape, idx + 1)
-      elif is_text_block(shape):
-        notes += process_text_block(shape, idx + 1)
-      elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
-        try:
-          notes += process_picture(shape, idx + 1)
-        except AttributeError as e:
-          print(f'Failed to process picture, skipped: {e}')
-      elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
-        notes += process_table(shape, idx + 1)
+      elif num_cols == 3:
+        out.put_para(':::: {.columns}')
+        
+        if(dict_shapes["shapes_l"]):
+          out.put_para('::: {.column width="33%"}')
+          notes.extend(process_shapes(dict_shapes["shapes_l"], idx))
+          out.put_para(':::')
+
+        if(dict_shapes["shapes_c"]):
+          out.put_para('::: {.column width="33%"}')
+          notes.extend(process_shapes(dict_shapes["shapes_c"], idx))
+          out.put_para(':::')
+        
+        if(dict_shapes["shapes_r"]):
+          out.put_para('::: {.column width="33%"}')
+          notes.extend(process_shapes(dict_shapes["shapes_r"], idx))
+          out.put_para(':::')
+        
+        out.put_para('::::')
+
       else:
-        try:
-          ph = shape.placeholder_format
-          if ph.type == PP_PLACEHOLDER.OBJECT and hasattr(shape, "image") and getattr(shape, "image"):
-            notes += process_picture(shape, idx + 1)
-        except:
-          pass
+        raise(ValueError, "Number of columns not allowed")
+
+    else:
+      notes.extend(process_shapes(shapes, idx))
+
+
     if not g.disable_notes and slide.has_notes_slide:
       text = slide.notes_slide.notes_text_frame.text
       if text:
