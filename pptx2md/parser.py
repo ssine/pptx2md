@@ -241,7 +241,7 @@ def process_shapes(current_shapes, slide_id):
           except:
             pass
 
-        return(local_notes)
+      return(local_notes)
 
 # main
 def parse(prs, outputer):
@@ -342,6 +342,7 @@ def parse_alt(prs, outputer):
     pdf_modelo = is_two_column_text(slide)
     
     if(pdf_modelo):
+      # TODO ¿En el modelamiento - Reducir gaussianas con demasiado sobrelape?
       salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), pdf_modelo[0], pdf_modelo[1])
       sum_of_gaussian = np.mean(list(salida), axis=0)
       parameters = fit_column_model(t_vector, sum_of_gaussian)

@@ -123,7 +123,8 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
 
 if __name__ == "__main__":
 
-    file_path = "/home/daedro/Documentos/Dev2024/github_repos/derb_site/original/Simulacion/3_SimDigital_28.03.2023.pptx"
+    # file_path = "/home/daedro/Documentos/Dev2024/github_repos/derb_site/original/Simulacion/3_SimDigital_28.03.2023.pptx"
+    file_path = "C:/Users/daedr/Documents/Docencia_UIS/david_2022/recursos_docencia2022ii/sitio/original/3_SimDigital_28.03.2023.pptx"
 
     prs = Presentation(file_path)
     total_slides = len(prs.slides)
@@ -167,7 +168,7 @@ if __name__ == "__main__":
 
             dict_shapes = assign_shapes(prs.slides[slide_number-1], parameters, int(len(parameters)/2), slide_width_mm=slide_width_mm)
 
-            print(dict_shapes)
+            # print(dict_shapes)
 
             # [x] TODO: Graficar curvas optimas junto con pdfs de los shapes
             # TODO: Asignar shapes a columnas
