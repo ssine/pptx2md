@@ -196,14 +196,12 @@ def process_picture(shape, slide_idx):
     out.put_image(img_outputter_path, g.max_img_width)
   return notes
 
-
 def process_table(shape, _):
   global out
   table = [[cell.text for cell in row.cells] for row in shape.table.rows]
   if len(table) > 0:
     out.put_table(table)
   return []
-
 
 def ungroup_shapes(shapes):
   res = []
@@ -216,8 +214,6 @@ def ungroup_shapes(shapes):
     except Exception as e:
       print(f'failed to load shape {shape}, skipped. error: {e}')
   return res
-
-
 
 def process_shapes(current_shapes, slide_id):
       local_notes = []
@@ -305,7 +301,7 @@ def parse(prs, outputer):
       print(note)
 
 
-# TODO: Finalizar parse alternativo para archivos qmd
+# TODO: Finalizar parse alternativo para archivos qmd - Integrar con funcion parse normal
 def parse_alt(prs, outputer):
   global out
   out = outputer
@@ -343,6 +339,8 @@ def parse_alt(prs, outputer):
     
     if(pdf_modelo):
       # TODO ¿En el modelamiento - Reducir gaussianas con demasiado sobrelape?
+      # Alternativamente, fijar valores iniciales para las gaussianas!!
+
       salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), pdf_modelo[0], pdf_modelo[1])
       sum_of_gaussian = np.mean(list(salida), axis=0)
       parameters = fit_column_model(t_vector, sum_of_gaussian)
@@ -416,5 +414,3 @@ def parse_alt(prs, outputer):
     print('Process finished with notice:')
     for note in notes:
       print(note)
-
-

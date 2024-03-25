@@ -230,6 +230,10 @@ format:
     if not fuzz.ratio(text, g.last_title.get(level, ''), score_cutoff=92):
       self.ofile.write('#' * level + ' ' + text + '\n\n')
       g.last_title[level] = text
+    else:
+      # [x] TODO Allow for repeated slide titles - Add (cont.) to the title
+      self.ofile.write('#' * level + ' ' + text + ' (cont.)' + '\n\n')
+      g.last_title[level] = text
 
   def put_list(self, text, level):
     self.ofile.write('  ' * level + '* ' + text.strip() + '\n')

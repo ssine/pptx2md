@@ -69,7 +69,7 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
     print("Ncols is %d"%ncols)
 
     if ncols==1:
-        shapes_dict["shapes_pre"]= shapes
+        shapes_dict["shapes_pre"]= sorted(shapes, key = lambda x: x.shape_type == MSO_SHAPE_TYPE.PLACEHOLDER, reverse=True)
         return(shapes_dict)
     elif ncols==2:
         param_means = params[0:2]
@@ -87,7 +87,9 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
             if shape.placeholder_format.type == PP_PLACEHOLDER.TITLE:
                 if shape.has_text_frame:
                     print('SLIDE TITLE: %s'%shape.text_frame.text)
-                shapes_dict["shapes_pre"].append(shape)
+                    shapes_dict["shapes_pre"].insert(0, shape)
+                else:
+                    shapes_dict["shapes_pre"].append(shape)
                 continue
         
         if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or shape.has_text_frame:
@@ -116,7 +118,9 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
             elif max_score_column==2:
                 shapes_dict["shapes_r"].append(shape)
             else:
-                raise(ValueError, "Valor maximo no corresponde a ninguna columna")      
+                raise(ValueError, "Valor maximo no corresponde a ninguna columna")   
+
+    # [x] TODO Verificar que dict_shapes["shapes_pre"] tiene como primer elemento el shape asociado al titulo   
     return(shapes_dict)
 
 # def 
@@ -171,8 +175,8 @@ if __name__ == "__main__":
             # print(dict_shapes)
 
             # [x] TODO: Graficar curvas optimas junto con pdfs de los shapes
-            # TODO: Asignar shapes a columnas
-            # TODO: Realizar conversion a qmd
+            # [x] TODO: Asignar shapes a columnas
+            # [x] TODO: Realizar conversion a qmd
 
             plt.subplot(5, 3, slide_number)
             plt.plot(t_vector, result)
