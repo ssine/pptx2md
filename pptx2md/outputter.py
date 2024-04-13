@@ -209,8 +209,7 @@ class quarto_outputter(outputter):
     self.esc_re2 = re.compile(r'(<[^>]+>)')
 
   def put_header(self):
-    self.ofile.write('''
----
+    self.ofile.write('''---
 title: "Presentation Title"
 author: "Author"
 format: 
@@ -231,7 +230,7 @@ format:
       self.ofile.write('#' * level + ' ' + text + '\n\n')
       g.last_title[level] = text
     else:
-      # [x] TODO Allow for repeated slide titles - Add (cont.) to the title
+      # Allow for repeated slide titles - One or more - Add (cont.) to the title
       self.ofile.write('#' * level + ' ' + text + ' (cont.)' + '\n\n')
       g.last_title[level] = text
 

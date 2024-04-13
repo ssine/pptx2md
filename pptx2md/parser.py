@@ -245,9 +245,8 @@ def parse(prs, outputer):
   out = outputer
   notes = []
 
-  print("Iniciando")
+  print("Starting conversion")
 
-  # if(isinstance(out, outputter.quarto_outputter)):
   # Adding inclusion of header for the first slide
   out.put_header()
 
@@ -268,25 +267,8 @@ def parse(prs, outputer):
       except:
         print('failed to print all bad shapes.')
 
-    for shape in shapes:
-      if is_title(shape):
-        notes += process_title(shape, idx + 1)
-      elif is_text_block(shape):
-        notes += process_text_block(shape, idx + 1)
-      elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
-        try:
-          notes += process_picture(shape, idx + 1)
-        except AttributeError as e:
-          print(f'Failed to process picture, skipped: {e}')
-      elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
-        notes += process_table(shape, idx + 1)
-      else:
-        try:
-          ph = shape.placeholder_format
-          if ph.type == PP_PLACEHOLDER.OBJECT and hasattr(shape, "image") and getattr(shape, "image"):
-            notes += process_picture(shape, idx + 1)
-        except:
-          pass
+    process_shapes(shapes, idx + 1)
+
     if not g.disable_notes and slide.has_notes_slide:
       text = slide.notes_slide.notes_text_frame.text
       if text:
@@ -301,7 +283,7 @@ def parse(prs, outputer):
       print(note)
 
 
-# TODO: Finalizar parse alternativo para archivos qmd - Integrar con funcion parse normal
+# Alternative parse function for qmd files
 def parse_alt(prs, outputer):
   global out
   out = outputer
@@ -312,9 +294,8 @@ def parse_alt(prs, outputer):
 
   t_vector = np.arange(1, slide_width_mm)
 
-  print("Starting convertion")
+  print("Starting convertion to qmd file")
 
-  # if(isinstance(out, outputter.quarto_outputter)):
   # Adding inclusion of header for the first slide
   out.put_header()
 
@@ -338,8 +319,7 @@ def parse_alt(prs, outputer):
     pdf_modelo = is_two_column_text(slide)
     
     if(pdf_modelo):
-      # TODO ¿En el modelamiento - Reducir gaussianas con demasiado sobrelape?
-      # Alternativamente, fijar valores iniciales para las gaussianas!!
+      # Model to infer number of columns
 
       salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), pdf_modelo[0], pdf_modelo[1])
       sum_of_gaussian = np.mean(list(salida), axis=0)
@@ -354,15 +334,10 @@ def parse_alt(prs, outputer):
       print("c: %d"%len(dict_shapes["shapes_c"]))
       print("r: %d"%len(dict_shapes["shapes_r"]))
             
-      # dict_shapes['shapes_pre']
-      #shapes = dict_shapes['shapes_pre']
-      # t_vector = np.arange(1, slide_width_mm)
-      #print(shapes)
-      # Modificar for
       notes.extend(process_shapes(dict_shapes["shapes_pre"], idx))
       if num_cols == 1:
         pass
-        # notes.extend(process_shapes(dict_shapes["shapes_l"], idx))
+      
       elif num_cols == 2:
         out.put_para(':::: {.columns}')
 

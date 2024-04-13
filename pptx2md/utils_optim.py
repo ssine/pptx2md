@@ -80,15 +80,9 @@ def fit_column_model(x_val, g_val):
 
 
 if __name__ == "__main__":
-
     # Test1
     # x_val = np.arange(0, 1000, 1) Para
     # g_val = (normal_pdf(x_val, mu=100, sigma=50) + normal_pdf(x_val, mu=700, sigma=50))/2
-
-
-    # Crear funcion, que reciba thetas y sigmas, calcule funcion g y determine cual es la mejor aproximacion 3 columnas, 2 columnas o 1 columna
-    # Basado en funcion de akaike, o también puede ser en sobrelape de las funciones de probabilidad (Asegurar mayor al 90%??).. Jensen Shannon, o Kullback Leibler son 
-    # otra posibilidad
 
     x_val = np.arange(0, 254, 1)
 
@@ -142,5 +136,3 @@ if __name__ == "__main__":
     plt.xlabel("Error %.5f. Intersection: %.3f"%(sum_error3, auc3))
 
     plt.show()
-
-

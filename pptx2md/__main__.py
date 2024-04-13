@@ -46,7 +46,7 @@ def parse_args():
   arg_parser.add_argument('--enable-slides', help='deliniate slides `\n---\n`', action="store_true")
   arg_parser.add_argument('--wiki', help='generate output as wikitext(TiddlyWiki)', action="store_true")
   arg_parser.add_argument('--mdk', help='generate output as madoko markdown', action="store_true")
-  arg_parser.add_argument('--qmd', help='genera archivo como presentacion de quarto', action="store_true")
+  arg_parser.add_argument('--qmd', help='generate output as quarto markdown presentation', action="store_true")
   arg_parser.add_argument('--min-block-size',
                           help='the minimum character number of a text block to be converted',
                           type=int,
@@ -150,9 +150,11 @@ def main():
     out = outputter.quarto_outputter(out_path)
   else:
     out = outputter.md_outputter(out_path)
-  # parse(prs, out)
   
-  parse_alt(prs, out)
+  if args.qmd:
+    parse_alt(prs, out)
+  else:
+    parse(prs, out)
 
 
 if __name__ == '__main__':
