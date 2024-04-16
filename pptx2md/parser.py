@@ -5,6 +5,10 @@ import collections.abc
 import pptx
 from pptx.enum.shapes import PP_PLACEHOLDER, MSO_SHAPE_TYPE
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
+from pptx.util import Length
+
+import numpy as np
+
 from PIL import Image
 import os
 from rapidfuzz import process as fuze_process
@@ -13,6 +17,13 @@ from operator import attrgetter
 from tqdm import tqdm
 from pptx2md.global_var import g
 from pptx2md import global_var
+
+import pptx2md.outputter as outputter
+
+from pptx2md.columns import is_two_column_text, assign_shapes
+
+from pptx2md.utils_optim import normal_pdf, fit_column_model
+
 
 picture_count = 0
 
@@ -129,8 +140,15 @@ def process_text_block(shape, _):
 
 def process_notes(text, _):
   global out
-  out.put_para('---')
-  out.put_para(text)
+  if(isinstance(out, outputter.quarto_outputter)):
+    
+    out.put_para("::: {.notes}")
+    out.put_para(text)
+    out.put_para(":::")
+  else:
+    out.put_para('---')
+    out.put_para(text)
+
   return []
 
 
@@ -178,14 +196,12 @@ def process_picture(shape, slide_idx):
     out.put_image(img_outputter_path, g.max_img_width)
   return notes
 
-
 def process_table(shape, _):
   global out
   table = [[cell.text for cell in row.cells] for row in shape.table.rows]
   if len(table) > 0:
     out.put_table(table)
   return []
-
 
 def ungroup_shapes(shapes):
   res = []
@@ -199,13 +215,43 @@ def ungroup_shapes(shapes):
       print(f'failed to load shape {shape}, skipped. error: {e}')
   return res
 
+def process_shapes(current_shapes, slide_id):
+      local_notes = []
+      for shape in current_shapes:
+        if is_title(shape):
+          local_notes += process_title(shape, slide_id + 1)
+        elif is_text_block(shape):
+          local_notes += process_text_block(shape, slide_id + 1)
+        elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
+          try:
+            local_notes += process_picture(shape, slide_id + 1)
+          except AttributeError as e:
+            print(f'Failed to process picture, skipped: {e}')
+        elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
+          local_notes += process_table(shape, slide_id + 1)
+        else:
+          try:
+            ph = shape.placeholder_format
+            if ph.type == PP_PLACEHOLDER.OBJECT and hasattr(shape, "image") and getattr(shape, "image"):
+              local_notes += process_picture(shape, slide_id + 1)
+          except:
+            pass
+
+      return(local_notes)
 
 # main
 def parse(prs, outputer):
   global out
   out = outputer
   notes = []
+
+  print("Starting conversion")
+
+  # Adding inclusion of header for the first slide
+  out.put_header()
+
   for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
+  # for idx, slide in enumerate(prs.slides):
     if g.page is not None and idx + 1 != g.page:
         continue
     shapes = []
@@ -221,25 +267,116 @@ def parse(prs, outputer):
       except:
         print('failed to print all bad shapes.')
 
-    for shape in shapes:
-      if is_title(shape):
-        notes += process_title(shape, idx + 1)
-      elif is_text_block(shape):
-        notes += process_text_block(shape, idx + 1)
-      elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
-        try:
-          notes += process_picture(shape, idx + 1)
-        except AttributeError as e:
-          print(f'Failed to process picture, skipped: {e}')
-      elif shape.shape_type == MSO_SHAPE_TYPE.TABLE:
-        notes += process_table(shape, idx + 1)
+    process_shapes(shapes, idx + 1)
+
+    if not g.disable_notes and slide.has_notes_slide:
+      text = slide.notes_slide.notes_text_frame.text
+      if text:
+        notes += process_notes(text, idx + 1)
+    if idx < len(prs.slides)-1 and g.enable_slides:
+        out.put_para("\n---\n")
+  out.close()
+
+  if len(notes) > 0:
+    print('Process finished with notice:')
+    for note in notes:
+      print(note)
+
+
+# Alternative parse function for qmd files
+def parse_alt(prs, outputer):
+  global out
+  out = outputer
+  notes = []
+
+  slide_width = pptx.util.Length(prs.slide_width)
+  slide_width_mm = slide_width.mm
+
+  t_vector = np.arange(1, slide_width_mm)
+
+  print("Starting convertion to qmd file")
+
+  # Adding inclusion of header for the first slide
+  out.put_header()
+
+  for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
+  # for idx, slide in enumerate(prs.slides):
+    if g.page is not None and idx + 1 != g.page:
+        continue
+    shapes = []
+    try:
+      shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
+    except:
+      print('Bad shapes encountered in this slide. Please check or move them and try again.')
+      print('shapes:')
+      try:
+        for sp in slide.shapes:
+          print(sp.shape_type)
+          print(sp.top, sp.left, sp.width, sp.height)
+      except:
+        print('failed to print all bad shapes.')
+
+    pdf_modelo = is_two_column_text(slide)
+    
+    if(pdf_modelo):
+      # Model to infer number of columns
+
+      salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), pdf_modelo[0], pdf_modelo[1])
+      sum_of_gaussian = np.mean(list(salida), axis=0)
+      parameters = fit_column_model(t_vector, sum_of_gaussian)
+
+      num_cols = int(len(parameters)/2)
+
+      dict_shapes = assign_shapes(slide, parameters, num_cols, slide_width_mm=slide_width_mm)
+      print("Cantidad de elementos")
+      print("pre: %d"%len(dict_shapes["shapes_pre"]))
+      print("l: %d"%len(dict_shapes["shapes_l"]))
+      print("c: %d"%len(dict_shapes["shapes_c"]))
+      print("r: %d"%len(dict_shapes["shapes_r"]))
+            
+      notes.extend(process_shapes(dict_shapes["shapes_pre"], idx))
+      if num_cols == 1:
+        pass
+      
+      elif num_cols == 2:
+        out.put_para(':::: {.columns}')
+
+        out.put_para('::: {.column width="50%"}')
+        notes.extend(process_shapes(dict_shapes["shapes_l"], idx))
+        out.put_para(':::')
+        out.put_para('::: {.column width="50%"}')
+        notes.extend(process_shapes(dict_shapes["shapes_r"], idx))
+        out.put_para(':::')
+        out.put_para('::::')
+
+
+      elif num_cols == 3:
+        out.put_para(':::: {.columns}')
+        
+        if(dict_shapes["shapes_l"]):
+          out.put_para('::: {.column width="33%"}')
+          notes.extend(process_shapes(dict_shapes["shapes_l"], idx))
+          out.put_para(':::')
+
+        if(dict_shapes["shapes_c"]):
+          out.put_para('::: {.column width="33%"}')
+          notes.extend(process_shapes(dict_shapes["shapes_c"], idx))
+          out.put_para(':::')
+        
+        if(dict_shapes["shapes_r"]):
+          out.put_para('::: {.column width="33%"}')
+          notes.extend(process_shapes(dict_shapes["shapes_r"], idx))
+          out.put_para(':::')
+        
+        out.put_para('::::')
+
       else:
-        try:
-          ph = shape.placeholder_format
-          if ph.type == PP_PLACEHOLDER.OBJECT and hasattr(shape, "image") and getattr(shape, "image"):
-            notes += process_picture(shape, idx + 1)
-        except:
-          pass
+        raise(ValueError, "Number of columns not allowed")
+
+    else:
+      notes.extend(process_shapes(shapes, idx))
+
+
     if not g.disable_notes and slide.has_notes_slide:
       text = slide.notes_slide.notes_text_frame.text
       if text:

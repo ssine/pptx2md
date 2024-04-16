@@ -6,3 +6,6 @@ build/
 .vscode/
 publish.bat
 *.pyc
+pptx2md/pptx2md.code-workspace
+/pptx2md/img
+*.qmd

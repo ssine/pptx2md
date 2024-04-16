@@ -3,7 +3,7 @@ import collections.abc
 from pptx import Presentation
 from pptx2md.global_var import g
 import pptx2md.outputter as outputter
-from pptx2md.parser import parse
+from pptx2md.parser import parse, parse_alt
 from pptx2md.tools import fix_null_rels
 import argparse
 import os, re
@@ -46,6 +46,7 @@ def parse_args():
   arg_parser.add_argument('--enable-slides', help='deliniate slides `\n---\n`', action="store_true")
   arg_parser.add_argument('--wiki', help='generate output as wikitext(TiddlyWiki)', action="store_true")
   arg_parser.add_argument('--mdk', help='generate output as madoko markdown', action="store_true")
+  arg_parser.add_argument('--qmd', help='generate output as quarto markdown presentation', action="store_true")
   arg_parser.add_argument('--min-block-size',
                           help='the minimum character number of a text block to be converted',
                           type=int,
@@ -67,6 +68,8 @@ def main():
 
   if args.wiki:
     out_path = 'out.tid'
+  elif args.qmd:
+    out_path = 'out.qmd'
   else:
     out_path = 'out.md'
 
@@ -143,9 +146,15 @@ def main():
     out = outputter.wiki_outputter(out_path)
   elif args.mdk:
     out = outputter.madoko_outputter(out_path)
+  elif args.qmd:
+    out = outputter.quarto_outputter(out_path)
   else:
     out = outputter.md_outputter(out_path)
-  parse(prs, out)
+  
+  if args.qmd:
+    parse_alt(prs, out)
+  else:
+    parse(prs, out)
 
 
 if __name__ == '__main__':

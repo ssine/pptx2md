@@ -86,6 +86,7 @@ Use it with `pptx2md [filename] -t titles.txt`.
 * `--enable-slides` deliniate slides `\n---\n`, this can help if you want to convert pptx slides to markdown slides
 * `--min-block-size [size]` the minimum number of characters for a text block to be outputted
 * `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding markup language
+* `--qmd` outputs to the qmd markup language used for [quarto](https://quarto.org/docs/presentations/revealjs/) powered presentations. It also features a simple method to infer the number of columns of each slide. 
 
 Note: install [wand](https://docs.wand-py.org/en/0.6.12/) for better chance of successfully converting wmf images, if needed.
 
