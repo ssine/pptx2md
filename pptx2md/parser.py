@@ -16,6 +16,7 @@ from pptx2md.types import (
     ConversionConfig,
     ImageElement,
     ListItemElement,
+    MultiColumnSlide,
     ParagraphElement,
     ParsedPresentation,
     Slide,
@@ -219,7 +220,6 @@ def process_shapes(config: ConversionConfig, current_shapes, slide_id: int) -> L
     return results
 
 
-# main
 def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
     result = ParsedPresentation(slides=[])
 
@@ -242,7 +242,10 @@ def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
             except:
                 logger.warning('failed to print all bad shapes.')
 
-        parsed_slide.elements.extend(process_shapes(config, shapes, idx + 1))
+        if config.is_qmd:
+            parsed_slide.elements.append(MultiColumnSlide(preface=process_shapes(config, shapes, idx + 1)))
+        else:
+            parsed_slide.elements.extend(process_shapes(config, shapes, idx + 1))
 
         if not config.disable_notes and slide.has_notes_slide:
             text = slide.notes_slide.notes_text_frame.text

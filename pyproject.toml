@@ -16,6 +16,16 @@ rapidfuzz = ">=0.10.0"
 Pillow = ">=6.0.0"
 tqdm = ">=4"
 pydantic = "^2.9.2"
+scipy = { version = "<=1.10.1", python = ">=3.8,<3.12", optional = true }
+numpy = { version = ">=1.24.0", optional = true }
+matplotlib = { version = ">=3.7.0", optional = true }
+
+[tool.poetry.extras]
+qmd = [
+    "scipy",
+    "numpy",
+    "matplotlib"
+]
 
 [tool.poetry.group.dev.dependencies]
 yapf = "^0.43.0"

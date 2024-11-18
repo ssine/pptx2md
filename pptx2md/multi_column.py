@@ -1,13 +1,88 @@
 from operator import attrgetter
 
-import matplotlib.pyplot as plt
 import numpy as np
-import pptx
-from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE, PP_PLACEHOLDER
 from pptx.util import Length
+from scipy.optimize import curve_fit
 
-from pptx2md.utils_optim import compute_pdf_overlap, f_gauss1, f_gauss2, f_gauss3, fit_column_model, normal_pdf
+
+def normal_pdf(x_vector, mu=0, sigma=1):
+    return (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-((x_vector - mu) / sigma)**2 / 2)
+
+
+def f(x_vector, theta0, theta1, sigma0, sigma1):
+    # sigma = 100
+    return 0.5 * ((1 / (sigma0 * np.sqrt(2 * np.pi))) * np.exp(-((x_vector - theta0) / sigma0)**2 / 2) +
+                  (1 / (sigma1 * np.sqrt(2 * np.pi))) * np.exp(-((x_vector - theta1) / sigma1)**2 / 2))
+
+
+def f_gauss1(x_vector, theta0, sigma0):
+    salida = normal_pdf(x_vector, theta0, sigma0)
+    return (salida)
+
+
+def f_gauss2(x_vector, theta0, theta1, sigma0, sigma1):
+    salida = (normal_pdf(x_vector, theta0, sigma0) + normal_pdf(x_vector, theta1, sigma1)) / 2
+    return (salida)
+
+
+def f_gauss3(x_vector, theta0, theta1, theta2, sigma0, sigma1, sigma2):
+    salida = (normal_pdf(x_vector, theta0, sigma0) + normal_pdf(x_vector, theta1, sigma1) +
+              normal_pdf(x_vector, theta2, sigma2)) / 3
+    return (salida)
+
+
+def compute_pdf_overlap(pdf_fun1, pdf_fun2):
+    fun_array = np.vstack([pdf_fun1, pdf_fun2])
+    intersection = np.min(fun_array, axis=0)
+    pdf_overlap = np.sum(intersection)
+    return (pdf_overlap)
+
+
+def fit_column_model(x_val, g_val):
+
+    q1 = np.quantile(x_val, 0.25)
+    q2 = np.median(x_val)
+    q3 = np.quantile(x_val, 0.75)
+
+    # print("Using q1: %d, q2: %d, q3: %d"%(q1, q2, q3))
+
+    try:
+        params1, cov1 = curve_fit(f_gauss1, x_val, g_val, [q2, q2 - q1])
+    except:
+        params1 = [q2, q2 - 1]
+
+    try:
+        params2, cov2 = curve_fit(f_gauss2, x_val, g_val, [q1, q3, q1, q1])
+    except:
+        params2 = [q1, q3, q1, q1]
+
+    try:
+        params3, cov3 = curve_fit(f_gauss3, x_val, g_val, [q1, q2, q3, q1, q2 - q1, q1])
+    except:
+        params3 = [q1, q2, q3, q1, q2 - q1, q1]
+
+    # Extract area under the curve of the intersection
+    auc1 = compute_pdf_overlap(f_gauss1(x_val, *params1), g_val)
+    auc2 = compute_pdf_overlap(f_gauss2(x_val, *params2), g_val)
+    auc3 = compute_pdf_overlap(f_gauss3(x_val, *params3), g_val)
+
+    print("Using auc1: %.2f, auc2: %.2f, auc3: %.2f" % (auc1, auc2, auc3))
+
+    if auc1 > 0.86:
+        print("Selected 1")
+        return (params1)
+    elif auc2 > 0.86:
+        print("Selected 2")
+        return (params2)
+    elif auc3 > 0.86:
+        print("Selected 3")
+        return (params3)
+    else:
+        idx = np.argmax([auc1, auc2, auc3])
+        all_params = [params1, params2, params3]
+        print("Selected %d" % (idx + 1))
+        return (all_params[idx])
 
 
 def ungroup_shapes(shapes):
@@ -110,61 +185,11 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
     return (shapes_dict)
 
 
-if __name__ == "__main__":
-    # Testing inference of number of columns
-    file_path = "test.pptx"
+def divide_multi_column_shapes(config, shapes, idx):
+    salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), pdf_modelo[0], pdf_modelo[1])
+    sum_of_gaussian = np.mean(list(salida), axis=0)
+    parameters = fit_column_model(t_vector, sum_of_gaussian)
 
-    prs = Presentation(file_path)
-    total_slides = len(prs.slides)
-    print('Total number of slides: %d' % total_slides)
+    num_cols = int(len(parameters) / 2)
 
-    slide_width = pptx.util.Length(prs.slide_width)
-    slide_width_emus = slide_width.emu
-    slide_width_mm = slide_width.mm
-
-    print("Slide width in mm: %d" % slide_width_mm)
-
-    all_output = list()
-
-    for slide_number, slide in enumerate(prs.slides, start=1):
-        layout = slide.slide_layout
-        print("\n---")
-        print("Slide %d uses layout: %s" % (slide_number, layout.name))
-
-        output = is_two_column_text(slide)
-        print(output)
-
-        all_output.append(output)
-
-    t_vector = np.arange(1, slide_width_mm)
-    all_result = list()
-
-    for slide_number, output in enumerate(all_output, start=1):
-        if output:
-            print("---")
-            print("Slide %d" % slide_number)
-            salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), output[0], output[1])
-            result = np.mean(list(salida), axis=0)
-            all_result.append(result)
-
-            parameters = fit_column_model(t_vector, result)
-
-            dict_shapes = assign_shapes(prs.slides[slide_number - 1],
-                                        parameters,
-                                        int(len(parameters) / 2),
-                                        slide_width_mm=slide_width_mm)
-
-            plt.subplot(5, 3, slide_number)
-            plt.plot(t_vector, result)
-            plt.title('Slide %d' % slide_number)
-
-            if len(parameters) == 2:
-                plt.plot(t_vector, f_gauss1(t_vector, *parameters), linestyle="dashed")
-            elif len(parameters) == 4:
-                plt.plot(t_vector, f_gauss2(t_vector, *parameters), linestyle="dashed")
-            elif len(parameters) == 6:
-                plt.plot(t_vector, f_gauss3(t_vector, *parameters), linestyle="dashed")
-
-            plt.xlabel(np.array2string(parameters))
-
-    plt.show()
+    dict_shapes = assign_shapes(slide, parameters, num_cols, slide_width_mm=slide_width_mm)

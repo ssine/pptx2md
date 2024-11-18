@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from pathlib import Path
 from typing import List, Optional, Union
@@ -66,9 +68,6 @@ class ElementType(str, Enum):
     PARAGRAPH = "paragraph"
     IMAGE = "image"
     TABLE = "table"
-    NOTE = "note"
-    COLUMN_START = "column_start"
-    COLUMN_END = "column_end"
 
 
 class TextStyle(BaseModel):
@@ -126,22 +125,13 @@ class TableElement(BaseElement):
     content: List[List[List[TextRun]]]  # rows -> cols -> rich text
 
 
-class NoteElement(BaseElement):
-    type: ElementType = ElementType.NOTE
-    content: List[TextRun]
+SlideElement = Union[TitleElement, ListItemElement, ParagraphElement, ImageElement, TableElement]
 
 
-class ColumnStartElement(BaseElement):
-    type: ElementType = ElementType.COLUMN_START
-    width: str  # e.g. "50%"
-
-
-class ColumnEndElement(BaseElement):
-    type: ElementType = ElementType.COLUMN_END
-
-
-SlideElement = Union[TitleElement, ListItemElement, ParagraphElement, ImageElement, TableElement, NoteElement,
-                     ColumnStartElement, ColumnEndElement]
+class MultiColumnSlide(BaseModel):
+    preface: SlideElement
+    columns: List[SlideElement]
+    notes: List[str]
 
 
 class Slide(BaseModel):
@@ -150,4 +140,4 @@ class Slide(BaseModel):
 
 
 class ParsedPresentation(BaseModel):
-    slides: List[Slide]
+    slides: List[Union[Slide, MultiColumnSlide]]
