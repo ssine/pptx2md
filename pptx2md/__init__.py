@@ -45,7 +45,7 @@ def convert(
     wiki: bool = False,  # generate output as wikitext(TiddlyWiki)
     mdk: bool = False,  # generate output as madoko markdown
     min_block_size: int = 15,  # the minimum character number of a text block to be converted
-    page: Union[int, None] = None # only convert the specified page 
+    page: Union[int, None] = None  # only convert the specified page 
 ):
 
     file_path = pptx_path
@@ -115,10 +115,17 @@ def convert(
         print(f"absolute path: {os.path.abspath(file_path)}")
         sys.exit(1)
     prs = Presentation(file_path)
+
+    # Parse presentation into intermediate structure
+    presentation_data = parse(prs)
+
+    # Create appropriate outputter
     if wiki:
         out = outputter.wiki_outputter(out_path)
     elif mdk:
         out = outputter.madoko_outputter(out_path)
     else:
         out = outputter.md_outputter(out_path)
-    parse(prs, out)
+
+    # Generate output
+    out.output(presentation_data)

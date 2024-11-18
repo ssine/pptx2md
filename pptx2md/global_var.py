@@ -1,11 +1,11 @@
 class global_var(object):
 
-  def __init__(self):
-    pass
+    def __init__(self):
+        pass
 
-  # utilities
-  def path_name_ext(self, path, name, ext):
-    return path + '/' + name + '.' + ext
+    # utilities
+    def path_name_ext(self, path, name, ext):
+        return path + '/' + name + '.' + ext
 
 
 g = global_var()
