@@ -10,11 +10,12 @@ license = "MIT Licence"
 pptx2md = "pptx2md.__main__:main"
 
 [tool.poetry.dependencies]
-python = ">=3.7,<4"
+python = ">=3.8,<4"
 python-pptx = ">=0.6.18"
 rapidfuzz = ">=0.10.0"
 Pillow = ">=6.0.0"
 tqdm = ">=4"
+pydantic = "^2.9.2"
 
 [tool.poetry.group.dev.dependencies]
 yapf = "^0.43.0"
