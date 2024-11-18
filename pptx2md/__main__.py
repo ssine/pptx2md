@@ -7,8 +7,11 @@ from pptx import Presentation
 
 import pptx2md.outputter as outputter
 from pptx2md.global_var import g
+from pptx2md.log import setup_logging
 from pptx2md.parser import parse, parse_alt
-from pptx2md.tools import fix_null_rels
+from pptx2md.utils import fix_null_rels, load_pptx
+
+setup_logging(compat_tqdm=True)
 
 
 # initialization functions
@@ -126,25 +129,8 @@ def main():
     if args.page:
         g.page = args.page
 
-    if not os.path.exists(file_path):
-        print(f'source file {file_path} not exist!')
-        print(f'absolute path: {os.path.abspath(file_path)}')
-        sys.exit(1)
-    try:
-        prs = Presentation(file_path)
-    except KeyError as err:
-        if len(err.args) > 0 and re.match(r'There is no item named .*NULL.* in the archive', str(err.args[0])):
-            print('corrupted links found, trying to purge...')
-            try:
-                res_path = fix_null_rels(file_path)
-                print(f'purged file saved to {res_path}.')
-                prs = Presentation(res_path)
-            except:
-                print('failed, please report this bug at https://github.com/ssine/pptx2md/issues')
-                sys.exit(1)
-        else:
-            print('unknown error, please report this bug at https://github.com/ssine/pptx2md/issues')
-            sys.exit(1)
+    prs = load_pptx(file_path)
+
     if args.wiki:
         out = outputter.wiki_outputter(out_path)
     elif args.mdk:
