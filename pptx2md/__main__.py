@@ -1,149 +1,89 @@
 import argparse
-import os
-import re
-import sys
-
-from pptx import Presentation
+from pathlib import Path
 
 import pptx2md.outputter as outputter
-from pptx2md.global_var import g
 from pptx2md.log import setup_logging
-from pptx2md.parser import parse, parse_alt
-from pptx2md.utils import fix_null_rels, load_pptx
+from pptx2md.parser import parse
+from pptx2md.types import ConversionConfig
+from pptx2md.utils import load_pptx, prepare_titles
 
 setup_logging(compat_tqdm=True)
 
 
-# initialization functions
-def prepare_titles(title_path):
-    with open(title_path, 'r', encoding='utf8') as f:
-        indent = -1
-        for line in f.readlines():
-            cnt = 0
-            while line[cnt] == ' ':
-                cnt += 1
-            if cnt == 0:
-                g.titles[line.strip()] = 1
-            else:
-                if indent == -1:
-                    indent = cnt
-                    g.titles[line.strip()] = 2
-                else:
-                    g.titles[line.strip()] = cnt // indent + 1
-                    g.max_custom_title = max([g.max_custom_title, cnt // indent + 1])
-
-
-def parse_args():
+def parse_args() -> ConversionConfig:
     arg_parser = argparse.ArgumentParser(description='Convert pptx to markdown')
-    arg_parser.add_argument('pptx_path', help='path to the pptx file to be converted')
-    arg_parser.add_argument('-t', '--title', help='path to the custom title list file')
-    arg_parser.add_argument('-o', '--output', help='path of the output file')
-    arg_parser.add_argument('-i', '--image-dir', help='where to put images extracted')
-    arg_parser.add_argument('--image-width', help='maximum image with in px', type=int)
-    arg_parser.add_argument('--disable-image', help='disable image extraction', action="store_true")
+    arg_parser.add_argument('pptx_path', type=Path, help='path to the pptx file to be converted')
+    arg_parser.add_argument('-t', '--title', type=Path, help='path to the custom title list file')
+    arg_parser.add_argument('-o', '--output', type=Path, help='path of the output file')
+    arg_parser.add_argument('-i', '--image-dir', type=Path, help='where to put images extracted')
+    arg_parser.add_argument('--image-width', type=int, help='maximum image with in px')
+    arg_parser.add_argument('--disable-image', action="store_true", help='disable image extraction')
     arg_parser.add_argument('--disable-wmf',
-                            help='keep wmf formatted image untouched(avoid exceptions under linux)',
-                            action="store_true")
-    arg_parser.add_argument('--disable-color', help='do not add color HTML tags', action="store_true")
+                            action="store_true",
+                            help='keep wmf formatted image untouched(avoid exceptions under linux)')
+    arg_parser.add_argument('--disable-color', action="store_true", help='do not add color HTML tags')
     arg_parser.add_argument('--disable-escaping',
-                            help='do not attempt to escape special characters',
-                            action="store_true")
-    arg_parser.add_argument('--disable-notes', help='do not add presenter notes', action="store_true")
-    arg_parser.add_argument('--enable-slides', help='deliniate slides `\n---\n`', action="store_true")
-    arg_parser.add_argument('--wiki', help='generate output as wikitext(TiddlyWiki)', action="store_true")
-    arg_parser.add_argument('--mdk', help='generate output as madoko markdown', action="store_true")
-    arg_parser.add_argument('--qmd', help='generate output as quarto markdown presentation', action="store_true")
+                            action="store_true",
+                            help='do not attempt to escape special characters')
+    arg_parser.add_argument('--disable-notes', action="store_true", help='do not add presenter notes')
+    arg_parser.add_argument('--enable-slides', action="store_true", help='deliniate slides `\n---\n`')
+    arg_parser.add_argument('--wiki', action="store_true", help='generate output as wikitext(TiddlyWiki)')
+    arg_parser.add_argument('--mdk', action="store_true", help='generate output as madoko markdown')
+    arg_parser.add_argument('--qmd', action="store_true", help='generate output as quarto markdown presentation')
     arg_parser.add_argument('--min-block-size',
-                            help='the minimum character number of a text block to be converted',
                             type=int,
-                            default=15)
-    arg_parser.add_argument("--page", help="only convert the specified page", type=int, default=None)
-    return arg_parser.parse_args()
+                            default=15,
+                            help='the minimum character number of a text block to be converted')
+    arg_parser.add_argument("--page", type=int, default=None, help="only convert the specified page")
+
+    args = arg_parser.parse_args()
+
+    # Determine output path if not specified
+    if args.output is None:
+        extension = '.tid' if args.wiki else '.qmd' if args.qmd else '.md'
+        args.output = Path(f'out{extension}')
+
+    return ConversionConfig(pptx_path=args.pptx_path,
+                            output_path=args.output,
+                            image_dir=args.image_dir or args.output.parent / 'img',
+                            title_path=args.title,
+                            image_width=args.image_width,
+                            disable_image=args.disable_image,
+                            disable_wmf=args.disable_wmf,
+                            disable_color=args.disable_color,
+                            disable_escaping=args.disable_escaping,
+                            disable_notes=args.disable_notes,
+                            enable_slides=args.enable_slides,
+                            is_wiki=args.wiki,
+                            is_mdk=args.mdk,
+                            is_qmd=args.qmd,
+                            min_block_size=args.min_block_size,
+                            page=args.page)
 
 
 def main():
-    args = parse_args()
+    config = parse_args()
 
-    file_path = args.pptx_path
-    g.file_prefix = ''.join(os.path.basename(file_path).split('.')[:-1])
+    if config.title_path:
+        config.custom_titles = prepare_titles(config.title_path)
 
-    if args.title:
-        g.use_custom_title
-        prepare_titles(args.title)
-        g.use_custom_title = True
+    prs = load_pptx(config.pptx_path)
 
-    if args.wiki:
-        out_path = 'out.tid'
-    elif args.qmd:
-        out_path = 'out.qmd'
+    if str(config.output_path).endswith('.json'):
+        with open(config.output_path, 'w') as f:
+            f.write(parse(config, prs).model_dump_json(indent=2))
+        return
+
+    if config.is_wiki:
+        out = outputter.wiki_outputter(config.output_path)
+    elif config.is_mdk:
+        out = outputter.madoko_outputter(config.output_path)
+    elif config.is_qmd:
+        out = outputter.quarto_outputter(config.output_path)
     else:
-        out_path = 'out.md'
+        out = outputter.md_outputter(config.output_path)
 
-    if args.output:
-        out_path = args.output
-
-    g.out_path = os.path.abspath(out_path)
-    g.img_path = os.path.join(out_path, '../img')
-
-    if args.image_dir:
-        g.img_path = args.image_dir
-
-    g.img_path = os.path.abspath(g.img_path)
-
-    if args.image_width:
-        g.max_img_width = args.image_width
-
-    if args.min_block_size:
-        g.text_block_threshold = args.min_block_size
-
-    if args.disable_image:
-        g.disable_image = True
-    else:
-        g.disable_image = False
-
-    if args.disable_wmf:
-        g.disable_wmf = True
-    else:
-        g.disable_wmf = False
-
-    if args.disable_color:
-        g.disable_color = True
-    else:
-        g.disable_color = False
-
-    if args.disable_escaping:
-        g.disable_escaping = True
-    else:
-        g.disable_escaping = False
-
-    if args.disable_notes:
-        g.disable_notes = True
-    else:
-        g.disable_notes = False
-
-    if args.enable_slides:
-        g.enable_slides = True
-    else:
-        g.enable_slides = False
-
-    if args.page:
-        g.page = args.page
-
-    prs = load_pptx(file_path)
-
-    if args.wiki:
-        out = outputter.wiki_outputter(out_path)
-    elif args.mdk:
-        out = outputter.madoko_outputter(out_path)
-    elif args.qmd:
-        out = outputter.quarto_outputter(out_path)
-    else:
-        out = outputter.md_outputter(out_path)
-
-    if args.qmd:
-        parse_alt(prs, out)
-    else:
-        parse(prs, out)
+    parse(prs, out)
 
 
 if __name__ == '__main__':

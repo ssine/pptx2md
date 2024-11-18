@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pptx2md"
-version = "1.6.1"
+version = "1.6.2"
 description = "This package converts pptx to markdown"
 repository = "https://github.com/ssine/pptx2md"
 authors = ["Liu Siyao <liu.siyao@qq.com>"]
@@ -21,6 +21,7 @@ pydantic = "^2.9.2"
 yapf = "^0.43.0"
 isort = {version = ">=5.0.0", python = ">=3.8"}
 pycln = "^2.4.0"
+wand = "^0.6.13"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

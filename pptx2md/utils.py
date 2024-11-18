@@ -4,6 +4,7 @@ import re
 import shutil
 import tempfile
 import uuid
+from pathlib import Path
 
 from pptx import Presentation
 
@@ -60,3 +61,22 @@ def load_pptx(file_path: str) -> Presentation:
             logger.error('unknown error, you can report this at https://github.com/ssine/pptx2md/issues')
             raise err
     return prs
+
+
+def prepare_titles(title_path: Path) -> dict[str, int]:
+    titles: dict[str, int] = {}
+    with open(title_path, 'r', encoding='utf8') as f:
+        indent = -1
+        for line in f.readlines():
+            cnt = 0
+            while line[cnt] == ' ':
+                cnt += 1
+            if cnt == 0:
+                titles[line.strip()] = 1
+            else:
+                if indent == -1:
+                    indent = cnt
+                    titles[line.strip()] = 2
+                else:
+                    titles[line.strip()] = cnt // indent + 1
+    return titles

@@ -5,7 +5,7 @@ import urllib.parse
 from rapidfuzz import fuzz
 
 from pptx2md.global_var import g
-from pptx2md.slide_data import ElementType, Presentation
+from pptx2md.types import ElementType, ParsedPresentation
 
 
 class outputter(object):
@@ -14,7 +14,7 @@ class outputter(object):
         os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
         self.ofile = open(file_path, 'w', encoding='utf8')
 
-    def output(self, presentation_data: Presentation):
+    def output(self, presentation_data: ParsedPresentation):
         self.put_header()
 
         for slide_idx, slide in enumerate(presentation_data.slides):
