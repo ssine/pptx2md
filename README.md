@@ -18,6 +18,7 @@ A tool to convert Powerpoint pptx file into markdown.
 * Markdown
 * [Tiddlywiki](https://tiddlywiki.com/)'s wikitext
 * [Madoko](https://www.madoko.net/)
+* [Quarto](https://quarto.org/)
 
 _Please star this repo if you like it!_
 
@@ -25,7 +26,7 @@ _Please star this repo if you like it!_
 
 ### Installation
 
-You need to have _[Python](https://www.python.org/)_ with version later than __3.8__ and _pip_ installed on your system, then run in the terminal:
+You need to have _[Python](https://www.python.org/)_ with version later than __3.10__ and _pip_ installed on your system, then run in the terminal:
 
 ```sh
 pip install pptx2md
