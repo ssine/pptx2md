@@ -19,7 +19,7 @@ from typing import List
 
 from rapidfuzz import fuzz
 
-from pptx2md.types import ConversionConfig, ElementType, ParsedPresentation, SlideType, TextRun
+from pptx2md.types import ConversionConfig, ElementType, ParsedPresentation, SlideElement, SlideType, TextRun
 from pptx2md.utils import rgb_to_hex
 
 
@@ -296,6 +296,74 @@ class QuartoFormatter(Formatter):
         super().__init__(config)
         self.esc_re1 = re.compile(r'([\\\*`!_\{\}\[\]\(\)#\+-\.])')
         self.esc_re2 = re.compile(r'(<[^>]+>)')
+
+    def output(self, presentation_data: ParsedPresentation):
+        self.put_header()
+
+        last_title = None
+
+        def put_elements(elements: List[SlideElement]):
+            nonlocal last_title
+
+            last_element = None
+            for element in elements:
+                if last_element and last_element.type == ElementType.ListItem and element.type != ElementType.ListItem:
+                    self.put_list_footer()
+
+                match element.type:
+                    case ElementType.Title:
+                        element.content = element.content.strip()
+                        if element.content:
+                            if last_title and last_title.level == element.level and fuzz.ratio(
+                                    last_title.content, element.content, score_cutoff=92):
+                                # skip if the title is the same as the last one
+                                # Allow for repeated slide titles - One or more - Add (cont.) to the title
+                                if self.config.keep_similar_titles:
+                                    self.put_title(f'{element.content} (cont.)', element.level)
+                            else:
+                                self.put_title(element.content, element.level)
+                            last_title = element
+                    case ElementType.ListItem:
+                        if not (last_element and last_element.type == ElementType.ListItem):
+                            self.put_list_header()
+                        self.put_list(self.get_formatted_runs(element.content), element.level)
+                    case ElementType.Paragraph:
+                        self.put_para(self.get_formatted_runs(element.content))
+                    case ElementType.Image:
+                        self.put_image(element.path, element.width)
+                    case ElementType.Table:
+                        self.put_table([[self.get_formatted_runs(cell) for cell in row] for row in element.content])
+                last_element = element
+
+        for slide_idx, slide in enumerate(presentation_data.slides):
+            if slide.type == SlideType.General:
+                put_elements(slide.elements)
+            elif slide.type == SlideType.MultiColumn:
+                put_elements(slide.preface)
+                if len(slide.columns) == 2:
+                    width = '50%'
+                elif len(slide.columns) == 3:
+                    width = '33%'
+                else:
+                    raise ValueError(f'Unsupported number of columns: {len(slide.columns)}')
+
+                self.put_para(':::: {.columns}')
+                for column in slide.columns:
+                    self.put_para(f'::: {{.column width="{width}"}}')
+                    put_elements(column)
+                    self.put_para(':::')
+                self.put_para('::::')
+
+            if not self.config.disable_notes and slide.notes:
+                self.put_para("::: {.notes}")
+                for note in slide.notes:
+                    self.put_para(note)
+                self.put_para(":::")
+
+            if slide_idx < len(presentation_data.slides) - 1 and self.config.enable_slides:
+                self.put_para("\n---\n")
+
+        self.close()
 
     def put_header(self):
         self.ofile.write('''---
