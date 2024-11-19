@@ -1,9 +1,17 @@
+import logging
 from operator import attrgetter
+from typing import Optional
 
 import numpy as np
+import pptx
+from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE, PP_PLACEHOLDER
 from pptx.util import Length
 from scipy.optimize import curve_fit
+
+from pptx2md.types import MultiColumnSlide
+
+logger = logging.getLogger(__name__)
 
 
 def normal_pdf(x_vector, mu=0, sigma=1):
@@ -185,11 +193,39 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
     return (shapes_dict)
 
 
-def divide_multi_column_shapes(config, shapes, idx):
+def get_multi_column_slide_if_present(prs: Presentation, raw_slide, process_shapes) -> Optional[MultiColumnSlide]:
+    pdf_modelo = is_two_column_text(raw_slide)
+
+    if not pdf_modelo:
+        return None
+
+    slide_width_mm = pptx.util.Length(prs.slide_width)
+    t_vector = np.arange(1, slide_width_mm)
+
+    # Model to infer number of columns
     salida = map(lambda mu, sigma: normal_pdf(t_vector, mu, sigma), pdf_modelo[0], pdf_modelo[1])
     sum_of_gaussian = np.mean(list(salida), axis=0)
     parameters = fit_column_model(t_vector, sum_of_gaussian)
 
     num_cols = int(len(parameters) / 2)
 
-    dict_shapes = assign_shapes(slide, parameters, num_cols, slide_width_mm=slide_width_mm)
+    if num_cols == 1:
+        return None
+
+    slide = MultiColumnSlide(preface=[], columns=[], notes=[])
+
+    dict_shapes = assign_shapes(raw_slide, parameters, num_cols, slide_width_mm=slide_width_mm)
+
+    slide.preface = process_shapes(dict_shapes["shapes_pre"])
+
+    if num_cols == 2:
+        slide.columns = [process_shapes(dict_shapes["shapes_l"]), process_shapes(dict_shapes["shapes_r"])]
+
+    elif num_cols == 3:
+        slide.columns = [
+            process_shapes(dict_shapes["shapes_l"]),
+            process_shapes(dict_shapes["shapes_c"]),
+            process_shapes(dict_shapes["shapes_r"])
+        ]
+
+    return slide

@@ -27,6 +27,7 @@ def parse_args() -> ConversionConfig:
                             help='do not attempt to escape special characters')
     arg_parser.add_argument('--disable-notes', action="store_true", help='do not add presenter notes')
     arg_parser.add_argument('--enable-slides', action="store_true", help='deliniate slides `\n---\n`')
+    arg_parser.add_argument('--try-multi-column', action="store_true", help='try to detect multi-column slides')
     arg_parser.add_argument('--wiki', action="store_true", help='generate output as wikitext(TiddlyWiki)')
     arg_parser.add_argument('--mdk', action="store_true", help='generate output as madoko markdown')
     arg_parser.add_argument('--qmd', action="store_true", help='generate output as quarto markdown presentation')
@@ -54,6 +55,7 @@ def parse_args() -> ConversionConfig:
                             disable_escaping=args.disable_escaping,
                             disable_notes=args.disable_notes,
                             enable_slides=args.enable_slides,
+                            try_multi_column=args.try_multi_column,
                             is_wiki=args.wiki,
                             is_mdk=args.mdk,
                             is_qmd=args.qmd,

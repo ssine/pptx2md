@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import logging
 import os
+from functools import partial
 from operator import attrgetter
 from typing import List, Union
 
@@ -12,14 +13,14 @@ from pptx.enum.shapes import MSO_SHAPE_TYPE, PP_PLACEHOLDER
 from rapidfuzz import process as fuze_process
 from tqdm import tqdm
 
+from pptx2md.multi_column import get_multi_column_slide_if_present
 from pptx2md.types import (
     ConversionConfig,
+    GeneralSlide,
     ImageElement,
     ListItemElement,
-    MultiColumnSlide,
     ParagraphElement,
     ParsedPresentation,
-    Slide,
     SlideElement,
     TableElement,
     TextRun,
@@ -226,7 +227,6 @@ def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
     logger.info("Starting conversion")
 
     for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
-        parsed_slide = Slide(elements=[], notes=[])
         if config.page is not None and idx + 1 != config.page:
             continue
         shapes = []
@@ -242,16 +242,21 @@ def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
             except:
                 logger.warning('failed to print all bad shapes.')
 
-        if config.is_qmd:
-            parsed_slide.elements.append(MultiColumnSlide(preface=process_shapes(config, shapes, idx + 1)))
+        if not config.try_multi_column:
+            result_slide = GeneralSlide(elements=process_shapes(config, shapes, idx + 1))
         else:
-            parsed_slide.elements.extend(process_shapes(config, shapes, idx + 1))
+            multi_column_slide = get_multi_column_slide_if_present(
+                prs, slide, partial(process_shapes, config=config, slide_id=idx + 1))
+            if multi_column_slide:
+                result_slide = multi_column_slide
+            else:
+                result_slide = GeneralSlide(elements=process_shapes(config, shapes, idx + 1))
 
         if not config.disable_notes and slide.has_notes_slide:
             text = slide.notes_slide.notes_text_frame.text
             if text:
-                parsed_slide.notes.append(text)
+                result_slide.notes.append(text)
 
-        result.slides.append(parsed_slide)
+        result.slides.append(result_slide)
 
     return result

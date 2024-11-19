@@ -61,13 +61,16 @@ class ConversionConfig(BaseModel):
     custom_titles: dict[str, int] = {}
     """Mapping of custom titles to their heading levels"""
 
+    try_multi_column: bool = False
+    """Try to detect multi-column slides"""
+
 
 class ElementType(str, Enum):
-    TITLE = "title"
-    LIST_ITEM = "list_item"
-    PARAGRAPH = "paragraph"
-    IMAGE = "image"
-    TABLE = "table"
+    Title = "Title"
+    ListItem = "ListItem"
+    Paragraph = "Paragraph"
+    Image = "Image"
+    Table = "Table"
 
 
 class TextStyle(BaseModel):
@@ -96,24 +99,24 @@ class BaseElement(BaseModel):
 
 
 class TitleElement(BaseElement):
-    type: ElementType = ElementType.TITLE
+    type: ElementType = ElementType.Title
     content: str
     level: int
 
 
 class ListItemElement(BaseElement):
-    type: ElementType = ElementType.LIST_ITEM
+    type: ElementType = ElementType.ListItem
     content: List[TextRun]
     level: int = 1
 
 
 class ParagraphElement(BaseElement):
-    type: ElementType = ElementType.PARAGRAPH
+    type: ElementType = ElementType.Paragraph
     content: List[TextRun]
 
 
 class ImageElement(BaseElement):
-    type: ElementType = ElementType.IMAGE
+    type: ElementType = ElementType.Image
     path: str
     width: Optional[int] = None
     original_ext: str = ""  # For tracking original file extension (e.g. wmf)
@@ -121,23 +124,33 @@ class ImageElement(BaseElement):
 
 
 class TableElement(BaseElement):
-    type: ElementType = ElementType.TABLE
+    type: ElementType = ElementType.Table
     content: List[List[List[TextRun]]]  # rows -> cols -> rich text
 
 
 SlideElement = Union[TitleElement, ListItemElement, ParagraphElement, ImageElement, TableElement]
 
 
+class SlideType(str, Enum):
+    MultiColumn = "MultiColumn"
+    General = "General"
+
+
 class MultiColumnSlide(BaseModel):
-    preface: SlideElement
+    type: SlideType = SlideType.MultiColumn
+    preface: List[SlideElement]
     columns: List[SlideElement]
-    notes: List[str]
+    notes: List[str] = []
 
 
-class Slide(BaseModel):
+class GeneralSlide(BaseModel):
+    type: SlideType = SlideType.General
     elements: List[SlideElement]
-    notes: List[str]
+    notes: List[str] = []
+
+
+Slide = Union[GeneralSlide, MultiColumnSlide]
 
 
 class ParsedPresentation(BaseModel):
-    slides: List[Union[Slide, MultiColumnSlide]]
+    slides: List[Slide]
