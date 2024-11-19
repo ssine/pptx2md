@@ -42,11 +42,11 @@ def is_title(shape):
     return False
 
 
-def is_text_block(shape):
+def is_text_block(config: ConversionConfig, shape):
     if shape.has_text_frame:
         if shape.is_placeholder and shape.placeholder_format.type == PP_PLACEHOLDER.BODY:
             return True
-        if len(shape.text) > g.text_block_threshold:
+        if len(shape.text) > config.min_block_size:
             return True
     return False
 
@@ -102,12 +102,12 @@ def get_text_runs(para) -> List[TextRun]:
 def process_title(config: ConversionConfig, shape, slide_idx) -> TitleElement:
     text = shape.text_frame.text.strip()
     if config.custom_titles:
-        res = fuze_process.extractOne(text, config.titles.keys(), score_cutoff=92)
+        res = fuze_process.extractOne(text, config.custom_titles.keys(), score_cutoff=92)
         if not res:
             return TitleElement(content=text, level=max(config.custom_titles.values()) + 1)
         else:
             logger.info(f'Title in slide {slide_idx} "{text}" is converted to "{res[0]}" as specified in title file.')
-            return TitleElement(content=res[0], level=config.titles[res[0]])
+            return TitleElement(content=res[0], level=config.custom_titles[res[0]])
     else:
         return TitleElement(content=text, level=1)
 
@@ -195,7 +195,7 @@ def process_shapes(config: ConversionConfig, current_shapes, slide_id: int) -> L
     for shape in current_shapes:
         if is_title(shape):
             results.append(process_title(config, shape, slide_id))
-        elif is_text_block(shape):
+        elif is_text_block(config, shape):
             results.extend(process_text_blocks(config, shape, slide_id))
         elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
             try:
