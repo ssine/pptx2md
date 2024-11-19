@@ -1,4 +1,5 @@
 import argparse
+import logging
 from pathlib import Path
 
 import pptx2md.outputter as outputter
@@ -8,6 +9,7 @@ from pptx2md.types import ConversionConfig
 from pptx2md.utils import load_pptx, prepare_titles
 
 setup_logging(compat_tqdm=True)
+logger = logging.getLogger(__name__)
 
 
 def parse_args() -> ConversionConfig:
@@ -36,6 +38,10 @@ def parse_args() -> ConversionConfig:
                             default=15,
                             help='the minimum character number of a text block to be converted')
     arg_parser.add_argument("--page", type=int, default=None, help="only convert the specified page")
+    arg_parser.add_argument(
+        "--keep-similar-titles",
+        action="store_true",
+        help="keep similar titles (allow for repeated slide titles - One or more - Add (cont.) to the title)")
 
     args = arg_parser.parse_args()
 
@@ -44,23 +50,26 @@ def parse_args() -> ConversionConfig:
         extension = '.tid' if args.wiki else '.qmd' if args.qmd else '.md'
         args.output = Path(f'out{extension}')
 
-    return ConversionConfig(pptx_path=args.pptx_path,
-                            output_path=args.output,
-                            image_dir=args.image_dir or args.output.parent / 'img',
-                            title_path=args.title,
-                            image_width=args.image_width,
-                            disable_image=args.disable_image,
-                            disable_wmf=args.disable_wmf,
-                            disable_color=args.disable_color,
-                            disable_escaping=args.disable_escaping,
-                            disable_notes=args.disable_notes,
-                            enable_slides=args.enable_slides,
-                            try_multi_column=args.try_multi_column,
-                            is_wiki=args.wiki,
-                            is_mdk=args.mdk,
-                            is_qmd=args.qmd,
-                            min_block_size=args.min_block_size,
-                            page=args.page)
+    return ConversionConfig(
+        pptx_path=args.pptx_path,
+        output_path=args.output,
+        image_dir=args.image_dir or args.output.parent / 'img',
+        title_path=args.title,
+        image_width=args.image_width,
+        disable_image=args.disable_image,
+        disable_wmf=args.disable_wmf,
+        disable_color=args.disable_color,
+        disable_escaping=args.disable_escaping,
+        disable_notes=args.disable_notes,
+        enable_slides=args.enable_slides,
+        try_multi_column=args.try_multi_column,
+        is_wiki=args.wiki,
+        is_mdk=args.mdk,
+        is_qmd=args.qmd,
+        min_block_size=args.min_block_size,
+        page=args.page,
+        keep_similar_titles=args.keep_similar_titles,
+    )
 
 
 def main():
@@ -71,21 +80,25 @@ def main():
 
     prs = load_pptx(config.pptx_path)
 
+    ast = parse(config, prs)
+
     if str(config.output_path).endswith('.json'):
         with open(config.output_path, 'w') as f:
-            f.write(parse(config, prs).model_dump_json(indent=2))
+            f.write(ast.model_dump_json(indent=2))
+        logger.info(f'presentation data saved to {config.output_path}')
         return
 
     if config.is_wiki:
-        out = outputter.wiki_outputter(config.output_path)
+        out = outputter.WikiFormatter(config)
     elif config.is_mdk:
-        out = outputter.madoko_outputter(config.output_path)
+        out = outputter.MadokoFormatter(config)
     elif config.is_qmd:
-        out = outputter.quarto_outputter(config.output_path)
+        out = outputter.QuartoFormatter(config)
     else:
-        out = outputter.md_outputter(config.output_path)
+        out = outputter.MarkdownFormatter(config)
 
-    parse(prs, out)
+    out.output(ast)
+    logger.info(f'converted document saved to {config.output_path}')
 
 
 if __name__ == '__main__':

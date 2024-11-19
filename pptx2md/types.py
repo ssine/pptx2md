@@ -64,6 +64,9 @@ class ConversionConfig(BaseModel):
     try_multi_column: bool = False
     """Try to detect multi-column slides"""
 
+    keep_similar_titles: bool = False
+    """Keep similar titles (allow for repeated slide titles - One or more - Add (cont.) to the title)"""
+
 
 class ElementType(str, Enum):
     Title = "Title"

@@ -1,43 +1,65 @@
 import os
 import re
 import urllib.parse
+from typing import List
 
 from rapidfuzz import fuzz
 
-from pptx2md.global_var import g
-from pptx2md.types import ElementType, ParsedPresentation
+from pptx2md.types import ConversionConfig, ElementType, ParsedPresentation, SlideType, TextRun
 
 
-class outputter(object):
+class Formatter:
 
-    def __init__(self, file_path):
-        os.makedirs(os.path.dirname(os.path.abspath(file_path)), exist_ok=True)
-        self.ofile = open(file_path, 'w', encoding='utf8')
+    def __init__(self, config: ConversionConfig):
+        os.makedirs(config.output_path.parent, exist_ok=True)
+        self.ofile = open(config.output_path, 'w', encoding='utf8')
+        self.config = config
 
     def output(self, presentation_data: ParsedPresentation):
         self.put_header()
 
         for slide_idx, slide in enumerate(presentation_data.slides):
-            for element in slide.elements:
-                if element.type == ElementType.TITLE:
-                    self.put_title(element.content, element.level)
-                elif element.type == ElementType.LIST_ITEM:
-                    self.put_list(element.content, element.level)
-                elif element.type == ElementType.PARAGRAPH:
-                    self.put_para(element.content)
-                elif element.type == ElementType.IMAGE:
-                    path, max_width = element.content
-                    self.put_image(path, max_width)
-                elif element.type == ElementType.TABLE:
-                    self.put_table(element.content)
-                elif element.type == ElementType.NOTE:
-                    self.put_note(element.content)
-                elif element.type == ElementType.COLUMN_START:
-                    self.put_column_start(element.content)
-                elif element.type == ElementType.COLUMN_END:
-                    self.put_column_end()
+            all_elements = []
+            if slide.type == SlideType.General:
+                all_elements = slide.elements
+            elif slide.type == SlideType.MultiColumn:
+                all_elements = slide.preface + slide.columns
 
-            if slide_idx < len(presentation_data.slides) - 1 and g.enable_slides:
+            last_element = None
+            last_title = None
+            for element in all_elements:
+                if last_element and last_element.type == ElementType.ListItem and element.type != ElementType.ListItem:
+                    self.put_list_footer()
+
+                match element.type:
+                    case ElementType.Title:
+                        if last_title and last_title.level == element.level and fuzz.ratio(
+                                last_title.content, element.content, score_cutoff=92):
+                            # skip if the title is the same as the last one
+                            # Allow for repeated slide titles - One or more - Add (cont.) to the title
+                            if self.config.keep_similar_titles:
+                                self.put_title(f'{element.content} (cont.)', element.level)
+                        else:
+                            self.put_title(element.content, element.level)
+                        last_title = element
+                    case ElementType.ListItem:
+                        if not (last_element and last_element.type == ElementType.ListItem):
+                            self.put_list_header()
+                        self.put_list(element.content, element.level)
+                    case ElementType.Paragraph:
+                        self.put_para(self.get_formatted_runs(element.content))
+                    case ElementType.Image:
+                        self.put_image(element.path, element.width)
+                    case ElementType.Table:
+                        self.put_table([[self.get_formatted_runs(cell) for cell in row] for row in element.content])
+                last_element = element
+
+            if not self.config.disable_notes and slide.notes:
+                self.put_para('---')
+                for note in slide.notes:
+                    self.put_para(note)
+
+            if slide_idx < len(presentation_data.slides) - 1 and self.config.enable_slides:
                 self.put_para("\n---\n")
 
         self.close()
@@ -50,6 +72,34 @@ class outputter(object):
 
     def put_list(self, text, level):
         pass
+
+    def put_list_header(self):
+        self.put_para('')
+
+    def put_list_footer(self):
+        self.put_para('')
+
+    def get_formatted_runs(self, runs: List[TextRun]):
+        res = ''
+        for run in runs:
+            text = run.text
+            if text == '':
+                continue
+
+            if not self.config.disable_escaping:
+                text = self.get_escaped(text)
+
+            if run.style.hyperlink:
+                text = self.get_hyperlink(text, run.style.hyperlink)
+            if run.style.is_accent:
+                text = self.get_accent(text)
+            elif run.style.is_strong:
+                text = self.get_strong(text)
+            if run.style.color_rgb:
+                text = self.get_colored(text, run.style.color_rgb)
+
+            res += text
+        return res.strip()
 
     def put_para(self, text):
         pass
@@ -85,18 +135,15 @@ class outputter(object):
         self.ofile.close()
 
 
-class md_outputter(outputter):
+class MarkdownFormatter(Formatter):
     # write outputs to markdown
-    def __init__(self, file_path):
-        super().__init__(file_path)
+    def __init__(self, config: ConversionConfig):
+        super().__init__(config)
         self.esc_re1 = re.compile(r'([\\\*`!_\{\}\[\]\(\)#\+-\.])')
         self.esc_re2 = re.compile(r'(<[^>]+>)')
 
     def put_title(self, text, level):
-        text = text.strip()
-        if not fuzz.ratio(text, g.last_title.get(level, ''), score_cutoff=92):
-            self.ofile.write('#' * level + ' ' + text + '\n\n')
-            g.last_title[level] = text
+        self.ofile.write('#' * level + ' ' + text + '\n\n')
 
     def put_list(self, text, level):
         self.ofile.write('  ' * level + '* ' + text.strip() + '\n')
@@ -137,17 +184,14 @@ class md_outputter(outputter):
         return text
 
 
-class wiki_outputter(outputter):
+class WikiFormatter(Formatter):
     # write outputs to wikitext
-    def __init__(self, file_path):
-        super().__init__(file_path)
+    def __init__(self, config: ConversionConfig):
+        super().__init__(config)
         self.esc_re = re.compile(r'<([^>]+)>')
 
     def put_title(self, text, level):
-        text = text.strip()
-        if not fuzz.ratio(text, g.last_title.get(level, ''), score_cutoff=92):
-            self.ofile.write('!' * level + ' ' + text + '\n\n')
-            g.last_title[level] = text
+        self.ofile.write('!' * level + ' ' + text + '\n\n')
 
     def put_list(self, text, level):
         self.ofile.write('*' * (level + 1) + ' ' + text.strip() + '\n')
@@ -181,19 +225,16 @@ class wiki_outputter(outputter):
         return text
 
 
-class madoko_outputter(outputter):
+class MadokoFormatter(Formatter):
     # write outputs to madoko markdown
-    def __init__(self, file_path):
-        super().__init__(file_path)
+    def __init__(self, config: ConversionConfig):
+        super().__init__(config)
         self.ofile.write('[TOC]\n\n')
         self.esc_re1 = re.compile(r'([\\\*`!_\{\}\[\]\(\)#\+-\.])')
         self.esc_re2 = re.compile(r'(<[^>]+>)')
 
     def put_title(self, text, level):
-        text = text.strip()
-        if not fuzz.ratio(text, g.last_title.get(level, ''), score_cutoff=92):
-            self.ofile.write('#' * level + ' ' + text + '\n\n')
-            g.last_title[level] = text
+        self.ofile.write('#' * level + ' ' + text + '\n\n')
 
     def put_list(self, text, level):
         self.ofile.write('  ' * level + '* ' + text.strip() + '\n')
@@ -232,10 +273,10 @@ class madoko_outputter(outputter):
         return text
 
 
-class quarto_outputter(outputter):
+class QuartoFormatter(Formatter):
     # write outputs to quarto markdown - reveal js
-    def __init__(self, file_path):
-        super().__init__(file_path)
+    def __init__(self, config: ConversionConfig):
+        super().__init__(config)
         self.esc_re1 = re.compile(r'([\\\*`!_\{\}\[\]\(\)#\+-\.])')
         self.esc_re2 = re.compile(r'(<[^>]+>)')
 
@@ -251,19 +292,12 @@ format:
     logo: img/logo.png
     footer: "Organization"
     incremental: true
-    theme: [simple, custom.scss]
+    theme: [simple]
 ---
 ''')
 
     def put_title(self, text, level):
-        text = text.strip()
-        if not fuzz.ratio(text, g.last_title.get(level, ''), score_cutoff=92):
-            self.ofile.write('#' * level + ' ' + text + '\n\n')
-            g.last_title[level] = text
-        else:
-            # Allow for repeated slide titles - One or more - Add (cont.) to the title
-            self.ofile.write('#' * level + ' ' + text + ' (cont.)' + '\n\n')
-            g.last_title[level] = text
+        self.ofile.write('#' * level + ' ' + text + '\n\n')
 
     def put_list(self, text, level):
         self.ofile.write('  ' * level + '* ' + text.strip() + '\n')
