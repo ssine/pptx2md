@@ -72,7 +72,7 @@ The first line with spaces in the begining is considered a second level heading 
 
 Use it with `pptx2md [filename] -t titles.txt`.
 
-## Other Arguments 
+## Full Arguments 
 
 * `-t [filename]` provide the title file
 * `-o [filename]` path of the output file
@@ -84,9 +84,12 @@ Use it with `pptx2md [filename] -t titles.txt`.
 * `--disable-wmf` keep wmf formatted image untouched (avoid exceptions under linux)
 * `--disable-color` disable color tags in HTML
 * `--enable-slides` deliniate slides `\n---\n`, this can help if you want to convert pptx slides to markdown slides
+* `--try-multi-column` try to detect multi-column slides
 * `--min-block-size [size]` the minimum number of characters for a text block to be outputted
 * `--wiki` / `--mdk` if you happen to be using tiddlywiki or madoko, this argument outputs the corresponding markup language
-* `--qmd` outputs to the qmd markup language used for [quarto](https://quarto.org/docs/presentations/revealjs/) powered presentations. It also features a simple method to infer the number of columns of each slide. 
+* `--qmd` outputs to the qmd markup language used for [quarto](https://quarto.org/docs/presentations/revealjs/) powered presentations
+* `--page [number]` only convert the specified page
+* `--keep-similar-titles` keep similar titles and add "(cont.)" to repeated slide titles
 
 Note: install [wand](https://docs.wand-py.org/en/0.6.12/) for better chance of successfully converting wmf images, if needed.
 
@@ -120,11 +123,87 @@ Example Data Link Protocols
 * **Left**: Source pptx file.
 * **Right**: Generated markdown file (rendered by madoko).
 
+
+## API Usage
+
+You can also use pptx2md programmatically in your Python code:
+
+```python
+from pptx2md import convert, ConversionConfig
+from pathlib import Path
+
+# Basic usage
+convert(
+    ConversionConfig(
+        pptx_path=Path('presentation.pptx'),
+        output_path=Path('output.md'),
+        image_dir=Path('img'),
+        disable_notes=True
+    )
+)
+```
+
+The `ConversionConfig` class accepts the same parameters as the command line arguments:
+
+- `pptx_path`: Path to the input PPTX file (required)
+- `output_path`: Path for the output markdown file (default: 'out.md')
+- `image_dir`: Directory for extracted images (default: 'img')
+- `title_path`: Path to custom titles file
+- `image_width`: Maximum width for images in px
+- `disable_image`: Skip image extraction
+- `disable_escaping`: Skip escaping special characters
+- `disable_notes`: Skip presenter notes
+- `disable_wmf`: Skip WMF image conversion
+- `disable_color`: Skip color tags in HTML
+- `enable_slides`: Add slide delimiters
+- `try_multi_column`: Attempt to detect multi-column slides
+- `min_block_size`: Minimum text block size
+- `wiki`: Output in TiddlyWiki format
+- `mdk`: Output in Madoko format
+- `qmd`: Output in Quarto format
+- `page`: Convert only specified page number
+- `keep_similar_titles`: Keep similar titles with "(cont.)" suffix
+
+
+
 ## Detailed Parse Rules
 
-* Lists are generated when paragraphs in a block has different level, otherwise a paragraph is generated.
-* When a title has fuzzy matching score larger than 92 with previous title, its _omitted_.
-* Some preset theme color style is converted into bold.
-* RGB colors are preserved.
-* Source texts are escaped.
-* Grouped shapes are flattened recursively.
+### Text and Layout Processing
+* Text blocks are identified in two ways:
+  * Paragraphs marked as "body" placeholders in the slide
+  * Text shapes containing more than the minimum block size (configurable)
+* Lists are generated when paragraphs in a block have different indentation levels
+* Single-level paragraphs are output as regular text blocks
+* Multi-column layouts can be detected with `--try-multi-column` flag
+* Grouped shapes are recursively flattened to process their contents
+* Shapes are processed in top-to-bottom, left-to-right order
+
+### Title Handling
+* When using custom titles:
+  * Fuzzy matching is used to match slide titles with the provided title list
+  * Matching score must be > 92 for a match to be accepted
+  * Unmatched titles default to the deepest header level
+* Similar titles (matching score > 92) are omitted by default unless `--keep-similar-titles` is used
+
+### Formatting and Styling
+* Text formatting is preserved through markdown syntax:
+  * Bold text from PPT is converted to `**bold**`
+  * Italic text is converted to `_italic_`
+  * Hyperlinks are preserved as `[text](url)`
+* Color handling:
+  * Theme colors marked as "Accent 1-6" are preserved
+  * RGB colors are converted to HTML color codes
+  * Dark theme colors are converted to bold text
+  * Color tags can be disabled with `--disable-color`
+
+### Special Elements
+* Images:
+  * Extracted to specified image directory
+  * WMF images are converted to PNG when possible
+  * Image width can be constrained with `--image-width`
+  * HTML img tags are used when width is specified
+* Tables:
+  * Merged cells are supported
+  * Complex formatting within cells is preserved
+* Special characters are escaped by default (can be disabled with `--disable-escaping`)
+* Presenter notes are included unless disabled with `--disable-notes`

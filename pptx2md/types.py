@@ -19,7 +19,7 @@ class ConversionConfig(BaseModel):
     image_dir: Optional[Path]
     """Where to put images extracted"""
 
-    title_path: Optional[Path]
+    title_path: Optional[Path] = None
     """Path to the custom title list file"""
 
     image_width: Optional[int] = None
