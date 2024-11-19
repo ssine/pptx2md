@@ -147,8 +147,8 @@ convert(
 The `ConversionConfig` class accepts the same parameters as the command line arguments:
 
 - `pptx_path`: Path to the input PPTX file (required)
-- `output_path`: Path for the output markdown file (default: 'out.md')
-- `image_dir`: Directory for extracted images (default: 'img')
+- `output_path`: Path for the output markdown file (required)
+- `image_dir`: Directory for extracted images (required)
 - `title_path`: Path to custom titles file
 - `image_width`: Maximum width for images in px
 - `disable_image`: Skip image extraction
