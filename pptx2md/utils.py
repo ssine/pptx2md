@@ -80,3 +80,8 @@ def prepare_titles(title_path: Path) -> dict[str, int]:
                 else:
                     titles[line.strip()] = cnt // indent + 1
     return titles
+
+
+def rgb_to_hex(rgb):
+    r, g, b = rgb
+    return f'#{r:02x}{g:02x}{b:02x}'

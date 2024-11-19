@@ -104,12 +104,12 @@ def process_title(config: ConversionConfig, shape, slide_idx) -> TitleElement:
     if config.custom_titles:
         res = fuze_process.extractOne(text, config.custom_titles.keys(), score_cutoff=92)
         if not res:
-            return TitleElement(content=text, level=max(config.custom_titles.values()) + 1)
+            return TitleElement(content=text.strip(), level=max(config.custom_titles.values()) + 1)
         else:
             logger.info(f'Title in slide {slide_idx} "{text}" is converted to "{res[0]}" as specified in title file.')
-            return TitleElement(content=res[0], level=config.custom_titles[res[0]])
+            return TitleElement(content=res[0].strip(), level=config.custom_titles[res[0]])
     else:
-        return TitleElement(content=text, level=1)
+        return TitleElement(content=text.strip(), level=1)
 
 
 def process_text_blocks(config: ConversionConfig, shape, slide_idx) -> List[Union[ListItemElement, ParagraphElement]]:
@@ -119,14 +119,14 @@ def process_text_blocks(config: ConversionConfig, shape, slide_idx) -> List[Unio
             if para.text.strip() == '':
                 continue
             text = get_text_runs(para)
-            results.append(ListItemElement(text=text, level=para.level))
+            results.append(ListItemElement(content=text, level=para.level))
     else:
         # paragraph block
         for para in shape.text_frame.paragraphs:
             if para.text.strip() == '':
                 continue
             text = get_text_runs(para)
-            results.append(ParagraphElement(text=text))
+            results.append(ParagraphElement(content=text))
     return results
 
 
@@ -171,9 +171,12 @@ def process_picture(config: ConversionConfig, shape, slide_idx) -> Union[ImageEl
 
 
 def process_table(config: ConversionConfig, shape, slide_idx) -> Union[TableElement, None]:
-    table = [[[TextRun(text=cell.text)] for cell in row.cells] for row in shape.table.rows]
+    table = [[sum([get_text_runs(p)
+                   for p in cell.text_frame.paragraphs], [])
+              for cell in row.cells]
+             for row in shape.table.rows]
     if len(table) > 0:
-        return TableElement(table=table)
+        return TableElement(content=table)
     return None
 
 

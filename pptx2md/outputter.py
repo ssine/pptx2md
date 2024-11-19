@@ -6,6 +6,7 @@ from typing import List
 from rapidfuzz import fuzz
 
 from pptx2md.types import ConversionConfig, ElementType, ParsedPresentation, SlideType, TextRun
+from pptx2md.utils import rgb_to_hex
 
 
 class Formatter:
@@ -18,6 +19,8 @@ class Formatter:
     def output(self, presentation_data: ParsedPresentation):
         self.put_header()
 
+        last_element = None
+        last_title = None
         for slide_idx, slide in enumerate(presentation_data.slides):
             all_elements = []
             if slide.type == SlideType.General:
@@ -25,27 +28,27 @@ class Formatter:
             elif slide.type == SlideType.MultiColumn:
                 all_elements = slide.preface + slide.columns
 
-            last_element = None
-            last_title = None
             for element in all_elements:
                 if last_element and last_element.type == ElementType.ListItem and element.type != ElementType.ListItem:
                     self.put_list_footer()
 
                 match element.type:
                     case ElementType.Title:
-                        if last_title and last_title.level == element.level and fuzz.ratio(
-                                last_title.content, element.content, score_cutoff=92):
-                            # skip if the title is the same as the last one
-                            # Allow for repeated slide titles - One or more - Add (cont.) to the title
-                            if self.config.keep_similar_titles:
-                                self.put_title(f'{element.content} (cont.)', element.level)
-                        else:
-                            self.put_title(element.content, element.level)
-                        last_title = element
+                        element.content = element.content.strip()
+                        if element.content:
+                            if last_title and last_title.level == element.level and fuzz.ratio(
+                                    last_title.content, element.content, score_cutoff=92):
+                                # skip if the title is the same as the last one
+                                # Allow for repeated slide titles - One or more - Add (cont.) to the title
+                                if self.config.keep_similar_titles:
+                                    self.put_title(f'{element.content} (cont.)', element.level)
+                            else:
+                                self.put_title(element.content, element.level)
+                            last_title = element
                     case ElementType.ListItem:
                         if not (last_element and last_element.type == ElementType.ListItem):
                             self.put_list_header()
-                        self.put_list(element.content, element.level)
+                        self.put_list(self.get_formatted_runs(element.content), element.level)
                     case ElementType.Paragraph:
                         self.put_para(self.get_formatted_runs(element.content))
                     case ElementType.Image:
@@ -170,7 +173,7 @@ class MarkdownFormatter(Formatter):
         return ' __' + text + '__ '
 
     def get_colored(self, text, rgb):
-        return ' <span style="color:#%s">%s</span> ' % (str(rgb), text)
+        return ' <span style="color:%s">%s</span> ' % (rgb_to_hex(rgb), text)
 
     def get_hyperlink(self, text, url):
         return '[' + text + '](' + url + ')'
@@ -212,7 +215,7 @@ class WikiFormatter(Formatter):
         return ' \'\'' + text + '\'\' '
 
     def get_colored(self, text, rgb):
-        return ' @@color:#%s; %s @@ ' % (str(rgb), text)
+        return ' @@color:%s; %s @@ ' % (rgb_to_hex(rgb), text)
 
     def get_hyperlink(self, text, url):
         return '[[' + text + '|' + url + ']]'
@@ -259,7 +262,7 @@ class MadokoFormatter(Formatter):
         return ' __' + text + '__ '
 
     def get_colored(self, text, rgb):
-        return ' <span style="color:#%s">%s</span> ' % (str(rgb), text)
+        return ' <span style="color:%s">%s</span> ' % (rgb_to_hex(rgb), text)
 
     def get_hyperlink(self, text, url):
         return '[' + text + '](' + url + ')'
@@ -324,7 +327,7 @@ format:
         return ' __' + text + '__ '
 
     def get_colored(self, text, rgb):
-        return ' <span style="color:#%s">%s</span> ' % (str(rgb), text)
+        return ' <span style="color:%s">%s</span> ' % (rgb_to_hex(rgb), text)
 
     def get_hyperlink(self, text, url):
         return '[' + text + '](' + url + ')'

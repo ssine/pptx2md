@@ -79,7 +79,7 @@ class ElementType(str, Enum):
 class TextStyle(BaseModel):
     is_accent: bool = False
     is_strong: bool = False
-    color_rgb: Optional[str] = None
+    color_rgb: Optional[tuple[int, int, int]] = None
     hyperlink: Optional[str] = None
 
 
