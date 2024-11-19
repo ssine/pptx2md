@@ -224,8 +224,6 @@ def process_shapes(config: ConversionConfig, current_shapes, slide_id: int) -> L
 def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
     result = ParsedPresentation(slides=[])
 
-    logger.info("Starting conversion")
-
     for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
         if config.page is not None and idx + 1 != config.page:
             continue
