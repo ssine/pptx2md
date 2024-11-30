@@ -112,7 +112,7 @@ class Formatter:
                 text = self.get_accent(text)
             elif run.style.is_strong:
                 text = self.get_strong(text)
-            if run.style.color_rgb:
+            if run.style.color_rgb and not self.config.disable_color:
                 text = self.get_colored(text, run.style.color_rgb)
 
             res += text
