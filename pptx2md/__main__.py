@@ -43,6 +43,7 @@ def parse_args() -> ConversionConfig:
     arg_parser.add_argument('--enable-slides', action="store_true", help='deliniate slides `\n---\n`')
     arg_parser.add_argument('--try-multi-column', action="store_true", help='try to detect multi-column slides')
     arg_parser.add_argument('--wiki', action="store_true", help='generate output as wikitext(TiddlyWiki)')
+    arg_parser.add_argument('--wikijs', action="store_true", help='generate output and imagelinks compatible to wikijs')
     arg_parser.add_argument('--mdk', action="store_true", help='generate output as madoko markdown')
     arg_parser.add_argument('--qmd', action="store_true", help='generate output as quarto markdown presentation')
     arg_parser.add_argument('--min-block-size',
@@ -73,9 +74,11 @@ def parse_args() -> ConversionConfig:
         disable_color=args.disable_color,
         disable_escaping=args.disable_escaping,
         disable_notes=args.disable_notes,
+        disable_master=args.disable_master,
         enable_slides=args.enable_slides,
         try_multi_column=args.try_multi_column,
         is_wiki=args.wiki,
+        is_wiki_js=args.wikijs,
         is_mdk=args.mdk,
         is_qmd=args.qmd,
         min_block_size=args.min_block_size,

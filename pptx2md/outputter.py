@@ -200,6 +200,14 @@ class MarkdownFormatter(Formatter):
         text = re.sub(self.esc_re2, self.esc_repl, text)
         return text
 
+class WikijsFormatter(MarkdownFormatter):
+
+    def put_image(self, path, max_width=None):
+        if max_width is None:
+            self.ofile.write(f'![](/{urllib.parse.quote(path)})\n\n')
+        else:
+            self.ofile.write(f'<img src="/{urllib.parse.quote(path)}" style="max-width:{max_width}px;" />\n\n')
+
 
 class WikiFormatter(Formatter):
     # write outputs to wikitext

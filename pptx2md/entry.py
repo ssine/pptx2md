@@ -40,6 +40,8 @@ def convert(config: ConversionConfig):
 
     if config.is_wiki:
         out = outputter.WikiFormatter(config)
+    elif config.is_wiki_js:
+        out = outputter.WikijsFormatter(config)
     elif config.is_mdk:
         out = outputter.MadokoFormatter(config)
     elif config.is_qmd:

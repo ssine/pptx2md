@@ -20,6 +20,8 @@ from functools import partial
 from operator import attrgetter
 from typing import List, Union
 
+from pathlib import Path
+
 from PIL import Image
 from pptx import Presentation
 from pptx.enum.dml import MSO_COLOR_TYPE, MSO_THEME_COLOR
@@ -152,13 +154,15 @@ def process_picture(config: ConversionConfig, shape, slide_idx) -> Union[ImageEl
 
     file_prefix = ''.join(os.path.basename(config.pptx_path).split('.')[:-1])
     pic_name = file_prefix + f'_{picture_count}'
+    if(config.is_wiki_js):
+        pic_name = pic_name.lower()
     pic_ext = shape.image.ext
     if not os.path.exists(config.image_dir):
         os.makedirs(config.image_dir)
 
     output_path = config.image_dir / f'{pic_name}.{pic_ext}'
     common_path = os.path.commonpath([config.output_path, config.image_dir])
-    img_outputter_path = os.path.relpath(output_path, common_path)
+    img_outputter_path = Path(os.path.relpath(output_path, common_path)).as_posix()
     with open(output_path, 'wb') as f:
         f.write(shape.image.blob)
         picture_count += 1
@@ -240,7 +244,13 @@ def process_shapes(config: ConversionConfig, current_shapes, slide_id: int) -> L
 
 def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
     result = ParsedPresentation(slides=[])
-
+    if(config.disable_master):
+        for slide in prs.slides:
+            for shape in slide.shapes:
+                # You can selectively remove shapes (like text, pictures, etc.)
+                if shape in prs.slide_master.slide_layouts[0]:
+                    sp = shape
+                    slide.shapes._spTree.remove(sp._element)
     for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
         if config.page is not None and idx + 1 != config.page:
             continue
