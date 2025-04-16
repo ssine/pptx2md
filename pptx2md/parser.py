@@ -150,8 +150,11 @@ def process_picture(config: ConversionConfig, shape, slide_idx) -> Union[ImageEl
 
     global picture_count
 
-    file_prefix = ''.join(os.path.basename(config.pptx_path).split('.')[:-1])
-    pic_name = file_prefix + f'_{picture_count}'
+    if config.pptx_path is None:
+        pic_name = f'img_{picture_count}'
+    else:
+        file_prefix = ''.join(os.path.basename(config.pptx_path).split('.')[:-1])
+        pic_name = file_prefix + f'_{picture_count}'
     pic_ext = shape.image.ext
     if not os.path.exists(config.image_dir):
         os.makedirs(config.image_dir)

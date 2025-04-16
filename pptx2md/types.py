@@ -14,17 +14,27 @@
 
 from __future__ import annotations
 
+import logging
 from enum import Enum
 from pathlib import Path
+from io import BytesIO, BufferedReader
 from typing import List, Optional, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator, ConfigDict
+
+logger = logging.getLogger(__name__)
+
+
+FileLikeType = Union[BytesIO, BufferedReader]
 
 
 class ConversionConfig(BaseModel):
     """Configuration for PowerPoint to Markdown conversion."""
 
-    pptx_path: Path
+    pptx: Optional[FileLikeType] = None
+    """File-like object of the pptx file to be converted"""
+
+    pptx_path: Optional[Path] = None
     """Path to the pptx file to be converted"""
 
     output_path: Path
@@ -80,6 +90,19 @@ class ConversionConfig(BaseModel):
 
     keep_similar_titles: bool = False
     """Keep similar titles (allow for repeated slide titles - One or more - Add (cont.) to the title)"""
+
+    @model_validator(mode="after")
+    def check_pptx_input(self):
+        if self.pptx is None and self.pptx_path is None:
+            raise ValueError("One of 'pptx' or 'pptx_path' must be supplied.")
+        elif self.pptx is not None and self.pptx_path is not None:
+            logger.warning(
+                "Both 'pptx' and 'pptx_path' are supplied. Using 'pptx_path' as the input file."
+            )
+            self.pptx = None
+        return self
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class ElementType(str, Enum):
@@ -145,7 +168,9 @@ class TableElement(BaseElement):
     content: List[List[List[TextRun]]]  # rows -> cols -> rich text
 
 
-SlideElement = Union[TitleElement, ListItemElement, ParagraphElement, ImageElement, TableElement]
+SlideElement = Union[
+    TitleElement, ListItemElement, ParagraphElement, ImageElement, TableElement
+]
 
 
 class SlideType(str, Enum):
