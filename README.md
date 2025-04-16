@@ -144,9 +144,10 @@ convert(
 )
 ```
 
-The `ConversionConfig` class accepts the same parameters as the command line arguments:
+The ConversionConfig class parameters:
 
-- `pptx_path`: Path to the input PPTX file (required)
+- `pptx`: A file-like object containing the PPTX data (required if `pptx_path` is not provided; not available via command line)
+- `pptx_path`: Path to the input PPTX file (required if `pptx` is not provided or if using the command line)
 - `output_path`: Path for the output markdown file (required)
 - `image_dir`: Directory for extracted images (required)
 - `title_path`: Path to custom titles file
@@ -165,7 +166,7 @@ The `ConversionConfig` class accepts the same parameters as the command line arg
 - `page`: Convert only specified page number
 - `keep_similar_titles`: Keep similar titles with "(cont.)" suffix
 
-
+Note: Provide either `pptx_path` or `pptx`, not both. If both are provided, `pptx_path` takes precedence.
 
 ## Detailed Parse Rules
 
