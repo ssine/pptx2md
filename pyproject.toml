@@ -4,7 +4,7 @@ version = "2.0.6"
 description = "This package converts pptx to markdown"
 repository = "https://github.com/ssine/pptx2md"
 authors = ["Liu Siyao <liu.siyao@qq.com>"]
-license = "MIT Licence"
+license = "Apache-2.0"
 
 [tool.poetry.scripts]
 pptx2md = "pptx2md.__main__:main"
