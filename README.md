@@ -159,10 +159,11 @@ The `ConversionConfig` class accepts the same parameters as the command line arg
 - `enable_slides`: Add slide delimiters
 - `try_multi_column`: Attempt to detect multi-column slides
 - `min_block_size`: Minimum text block size
-- `wiki`: Output in TiddlyWiki format
-- `mdk`: Output in Madoko format
-- `qmd`: Output in Quarto format
+- `is_wiki`: Output in TiddlyWiki format
+- `is_mdk`: Output in Madoko format
+- `is_qmd`: Output in Quarto format
 - `page`: Convert only specified page number
+- `custom_titles`: Mapping of custom titles to their heading levels
 - `keep_similar_titles`: Keep similar titles with "(cont.)" suffix
 
 
