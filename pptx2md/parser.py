@@ -267,7 +267,7 @@ def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
             else:
                 result_slide = GeneralSlide(elements=process_shapes(config, shapes, idx + 1))
 
-        if not config.disable_notes and slide.has_notes_slide:
+        if not config.disable_notes and slide.has_notes_slide and slide.notes_slide.notes_text_frame:
             text = slide.notes_slide.notes_text_frame.text
             if text:
                 result_slide.notes.append(text)
