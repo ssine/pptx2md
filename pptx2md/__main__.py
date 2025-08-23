@@ -5,17 +5,13 @@
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 import argparse
 import logging
+import subprocess
+import sys
+import re
 from pathlib import Path
-
 from pptx2md.entry import convert
 from pptx2md.log import setup_logging
 from pptx2md.types import ConversionConfig
@@ -34,11 +30,9 @@ def parse_args() -> ConversionConfig:
     arg_parser.add_argument('--disable-image', action="store_true", help='disable image extraction')
     arg_parser.add_argument('--disable-wmf',
                             action="store_true",
-                            help='keep wmf formatted image untouched(avoid exceptions under linux)')
+                            help='keep wmf formatted image untouched (avoid exceptions under linux)')
     arg_parser.add_argument('--disable-color', action="store_true", help='do not add color HTML tags')
-    arg_parser.add_argument('--disable-escaping',
-                            action="store_true",
-                            help='do not attempt to escape special characters')
+    arg_parser.add_argument('--disable-escaping', action="store_true", help='do not escape special characters')
     arg_parser.add_argument('--disable-notes', action="store_true", help='do not add presenter notes')
     arg_parser.add_argument('--enable-slides', action="store_true", help='deliniate slides `\n---\n`')
     arg_parser.add_argument('--try-multi-column', action="store_true", help='try to detect multi-column slides')
@@ -48,18 +42,15 @@ def parse_args() -> ConversionConfig:
     arg_parser.add_argument('--min-block-size',
                             type=int,
                             default=15,
-                            help='the minimum character number of a text block to be converted')
+                            help='minimum characters per text block')
     arg_parser.add_argument("--page", type=int, default=None, help="only convert the specified page")
-    arg_parser.add_argument(
-        "--keep-similar-titles",
-        action="store_true",
-        help="keep similar titles (allow for repeated slide titles - One or more - Add (cont.) to the title)")
+    arg_parser.add_argument("--keep-similar-titles", action="store_true",
+                            help="allow repeated slide titles (append '(cont.)')")
 
     args = arg_parser.parse_args()
 
-    # Determine output path if not specified
+    extension = '.tid' if args.wiki else '.qmd' if args.qmd else '.md'
     if args.output is None:
-        extension = '.tid' if args.wiki else '.qmd' if args.qmd else '.md'
         args.output = Path(f'out{extension}')
 
     return ConversionConfig(
@@ -84,10 +75,52 @@ def parse_args() -> ConversionConfig:
     )
 
 
+def convert_wmf_to_svg(imgpath: Path):
+    for wmf in sorted(imgpath.glob("*.wmf")):
+        svg = wmf.with_suffix(".svg")
+        try:
+            subprocess.run([
+                "inkscape", str(wmf),
+                "--export-type=svg",
+                "--export-filename", str(svg),
+                "--export-plain-svg"
+            ], check=True)
+            print(f"[INFO] Converted {wmf.name} → {svg.name}")
+        except subprocess.CalledProcessError as e:
+            print(f"[WARN] Failed to convert {wmf.name} to SVG: {e}")
+
+
+def inject_svg_includes(md_file: Path, imgpath: Path, base_name: str):
+    lines = md_file.read_text(encoding="utf-8").splitlines()
+    new_lines = []
+    slide_counter = 0
+
+    for line in lines:
+        if line.startswith("# "):
+            slide_counter += 1
+        new_lines.append(line)
+
+        svg_file = imgpath / f"{base_name}_{slide_counter}.svg"
+        if svg_file.exists():
+            include_line = fr"\includesvg[width=0.9\linewidth]{{./{imgpath.name}/{svg_file.stem}}}"
+            if include_line not in new_lines:
+                new_lines.append("")
+                new_lines.append(f"<!-- Converted WMF image from Slide {slide_counter} -->")
+                new_lines.append(include_line)
+                new_lines.append("")
+
+    md_file.write_text("\n".join(new_lines), encoding="utf-8")
+
+
 def main():
     config = parse_args()
     convert(config)
 
+    if not config.disable_wmf:
+        convert_wmf_to_svg(config.image_dir)
+        inject_svg_includes(config.output_path, config.image_dir, config.pptx_path.stem)
+
 
 if __name__ == '__main__':
     main()
+
