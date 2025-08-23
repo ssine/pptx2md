@@ -32,6 +32,11 @@ You need to have _[Python](https://www.python.org/)_ with version later than __3
 pip install pptx2md
 ```
 
+### Optional Dependencies
+
+- `inkscape` (for converting WMF images to SVG)
+
+
 ### Usage
 
 Once you have installed it, use the command `pptx2md [pptx filename]` to convert _pptx file_ into markdown.
