@@ -246,16 +246,24 @@ def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
             continue
         shapes = []
         try:
-            shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
+            # shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
+            shapes = [
+                sp for sp in ungroup_shapes(slide.shapes)
+                if getattr(sp, "top", None) is not None and getattr(sp, "left", None) is not None
+            ]
+            shapes.sort(key=attrgetter('top', 'left'))
         except:
-            logger.warning('Bad shapes encountered in this slide. Please check or remove them and try again.')
-            logger.warning('shapes:')
-            try:
-                for sp in slide.shapes:
-                    logger.warning(sp.shape_type)
-                    logger.warning(sp.top, sp.left, sp.width, sp.height)
-            except:
-                logger.warning('failed to print all bad shapes.')
+            # logger.warning('Bad shapes encountered in this slide. Please check or remove them and try again.')
+            # logger.warning('shapes:')
+            # try:
+            #     for sp in slide.shapes:
+            #         logger.warning(sp.shape_type)
+            #         logger.warning(sp.top, sp.left, sp.width, sp.height)
+            # except:
+            #     logger.warning('failed to print all bad shapes.')
+            logger.warning("Missing shape position: top=%s left=%s width=%s height=%s",
+               getattr(sp, "top", None), getattr(sp, "left", None),
+               getattr(sp, "width", None), getattr(sp, "height", None))
 
         if not config.try_multi_column:
             result_slide = GeneralSlide(elements=process_shapes(config, shapes, idx + 1))
