@@ -361,31 +361,18 @@ class QuartoFormatter(Formatter):
                 self.put_para(":::")
 
             if slide_idx < len(presentation_data.slides) - 1 and self.config.enable_slides:
-                self.put_para("\n---\n")
+                self.put_para("\n***\n")
 
         self.close()
 
     def put_header(self):
-        self.ofile.write('''---
-title: "Presentation Title"
-author: "Author"
-format: 
-  revealjs:
-    slide-number: c/t
-    width: 1600
-    height: 900
-    logo: img/logo.png
-    footer: "Organization"
-    incremental: true
-    theme: [simple]
----
-''')
+        pass
 
     def put_title(self, text, level):
-        self.ofile.write('#' * level + ' ' + text + '\n\n')
+        self.ofile.write('\n\n' + '#' * level + ' ' + text + '\n\n')
 
     def put_list(self, text, level):
-        self.ofile.write('  ' * level + '* ' + text.strip() + '\n')
+        self.ofile.write('  ' * level + '- ' + text.strip() + '\n')
 
     def put_para(self, text):
         self.ofile.write(text + '\n\n')
@@ -403,13 +390,13 @@ format:
         self.ofile.write('\n'.join([gen_table_row(row) for row in table[1:]]) + '\n\n')
 
     def get_accent(self, text):
-        return ' _' + text + '_ '
+        return ' *' + text + '* '
 
     def get_strong(self, text):
         return ' __' + text + '__ '
 
     def get_colored(self, text, rgb):
-        return ' <span style="color:%s">%s</span> ' % (rgb_to_hex(rgb), text)
+        return ' [%s]{style="color:%s"} ' % (text, rgb_to_hex(rgb))
 
     def get_hyperlink(self, text, url):
         return '[' + text + '](' + url + ')'

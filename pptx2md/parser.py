@@ -44,8 +44,6 @@ from pptx2md.types import (
 
 logger = logging.getLogger(__name__)
 
-picture_count = 0
-
 
 def is_title(shape):
     if shape.is_placeholder and (shape.placeholder_format.type == PP_PLACEHOLDER.TITLE or
@@ -148,11 +146,11 @@ def process_picture(config: ConversionConfig, shape, slide_idx) -> Union[ImageEl
     if config.disable_image:
         return None
 
-    global picture_count
-
-    file_prefix = ''.join(os.path.basename(config.pptx_path).split('.')[:-1])
-    pic_name = file_prefix + f'_{picture_count}'
-    pic_ext = shape.image.ext
+    pic_name = shape.image.sha1
+    if shape.image.filename:
+        pic_ext = shape.image.filename.split('.')[-1]
+    else:
+        pic_ext = shape.image.ext
     if not os.path.exists(config.image_dir):
         os.makedirs(config.image_dir)
 
@@ -161,10 +159,9 @@ def process_picture(config: ConversionConfig, shape, slide_idx) -> Union[ImageEl
     img_outputter_path = os.path.relpath(output_path, common_path)
     with open(output_path, 'wb') as f:
         f.write(shape.image.blob)
-        picture_count += 1
 
     # normal images
-    if pic_ext != 'wmf':
+    if config.disable_wmf or (pic_ext != 'wmf' and pic_ext != 'emf'):
         return ImageElement(path=img_outputter_path, width=config.image_width)
 
     # wmf images, try to convert, if failed, output as original
