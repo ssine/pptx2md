@@ -54,6 +54,10 @@ def parse_args() -> ConversionConfig:
         "--keep-similar-titles",
         action="store_true",
         help="keep similar titles (allow for repeated slide titles - One or more - Add (cont.) to the title)")
+    arg_parser.add_argument(
+        "--slide-numbers",
+        action="store_true",
+        help="add slide number comments (<!-- Slide N -->) to the output")
 
     args = arg_parser.parse_args()
 
@@ -81,6 +85,7 @@ def parse_args() -> ConversionConfig:
         min_block_size=args.min_block_size,
         page=args.page,
         keep_similar_titles=args.keep_similar_titles,
+        slide_numbers=args.slide_numbers,
     )
 
 

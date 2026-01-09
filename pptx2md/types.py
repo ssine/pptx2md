@@ -81,6 +81,9 @@ class ConversionConfig(BaseModel):
     keep_similar_titles: bool = False
     """Keep similar titles (allow for repeated slide titles - One or more - Add (cont.) to the title)"""
 
+    slide_numbers: bool = False
+    """Add slide number comments (<!-- Slide N -->) to the output"""
+
 
 class ElementType(str, Enum):
     Title = "Title"
