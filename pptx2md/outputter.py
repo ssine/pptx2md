@@ -36,6 +36,10 @@ class Formatter:
         last_element = None
         last_title = None
         for slide_idx, slide in enumerate(presentation_data.slides):
+            # Add slide number comment if enabled
+            if self.config.slide_numbers:
+                self.put_slide_number(slide_idx + 1)
+
             all_elements = []
             if slide.type == SlideType.General:
                 all_elements = slide.elements
@@ -83,6 +87,10 @@ class Formatter:
 
     def put_header(self):
         pass
+
+    def put_slide_number(self, number):
+        """Output slide number comment. Override in subclasses for format-specific output."""
+        self.ofile.write(f'<!-- Slide {number} -->\n')
 
     def put_title(self, text, level):
         pass
@@ -336,6 +344,10 @@ class QuartoFormatter(Formatter):
                 last_element = element
 
         for slide_idx, slide in enumerate(presentation_data.slides):
+            # Add slide number comment if enabled
+            if self.config.slide_numbers:
+                self.put_slide_number(slide_idx + 1)
+
             if slide.type == SlideType.General:
                 put_elements(slide.elements)
             elif slide.type == SlideType.MultiColumn:
