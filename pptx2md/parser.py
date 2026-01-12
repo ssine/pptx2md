@@ -244,6 +244,15 @@ def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
     for idx, slide in enumerate(tqdm(prs.slides, desc='Converting slides')):
         if config.page is not None and idx + 1 != config.page:
             continue
+
+        # Check if slide is hidden
+        show_attr = slide._element.get('show')
+        is_hidden = show_attr == '0'
+
+        # Skip hidden slides if configured
+        if config.skip_hidden and is_hidden:
+            continue
+
         shapes = []
         try:
             shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
@@ -258,14 +267,16 @@ def parse(config: ConversionConfig, prs: Presentation) -> ParsedPresentation:
                 logger.warning('failed to print all bad shapes.')
 
         if not config.try_multi_column:
-            result_slide = GeneralSlide(elements=process_shapes(config, shapes, idx + 1))
+            result_slide = GeneralSlide(elements=process_shapes(config, shapes, idx + 1), is_hidden=is_hidden, original_index=idx + 1)
         else:
             multi_column_slide = get_multi_column_slide_if_present(
                 prs, slide, partial(process_shapes, config=config, slide_id=idx + 1))
             if multi_column_slide:
                 result_slide = multi_column_slide
+                result_slide.is_hidden = is_hidden
+                result_slide.original_index = idx + 1
             else:
-                result_slide = GeneralSlide(elements=process_shapes(config, shapes, idx + 1))
+                result_slide = GeneralSlide(elements=process_shapes(config, shapes, idx + 1), is_hidden=is_hidden, original_index=idx + 1)
 
         if not config.disable_notes and slide.has_notes_slide:
             text = slide.notes_slide.notes_text_frame.text

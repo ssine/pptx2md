@@ -81,6 +81,12 @@ class ConversionConfig(BaseModel):
     keep_similar_titles: bool = False
     """Keep similar titles (allow for repeated slide titles - One or more - Add (cont.) to the title)"""
 
+    slide_visibility: bool = False
+    """Show slide visibility status (<!-- Status: visible/hidden -->) in the output"""
+
+    skip_hidden: bool = False
+    """Skip hidden slides in the output (preserves original slide numbering)"""
+
 
 class ElementType(str, Enum):
     Title = "Title"
@@ -158,12 +164,20 @@ class MultiColumnSlide(BaseModel):
     preface: List[SlideElement]
     columns: List[SlideElement]
     notes: List[str] = []
+    is_hidden: bool = False
+    """Whether this slide is hidden in the presentation"""
+    original_index: int = 0
+    """Original 1-based slide index in the presentation"""
 
 
 class GeneralSlide(BaseModel):
     type: SlideType = SlideType.General
     elements: List[SlideElement]
     notes: List[str] = []
+    is_hidden: bool = False
+    """Whether this slide is hidden in the presentation"""
+    original_index: int = 0
+    """Original 1-based slide index in the presentation"""
 
 
 Slide = Union[GeneralSlide, MultiColumnSlide]
