@@ -36,6 +36,10 @@ class Formatter:
         last_element = None
         last_title = None
         for slide_idx, slide in enumerate(presentation_data.slides):
+            # Add slide visibility comment if enabled
+            if self.config.slide_visibility:
+                self.put_slide_visibility(slide.is_hidden)
+
             all_elements = []
             if slide.type == SlideType.General:
                 all_elements = slide.elements
@@ -83,6 +87,11 @@ class Formatter:
 
     def put_header(self):
         pass
+
+    def put_slide_visibility(self, is_hidden: bool):
+        """Output slide visibility status comment."""
+        status = 'hidden' if is_hidden else 'visible'
+        self.ofile.write(f'<!-- Status: {status} -->\n')
 
     def put_title(self, text, level):
         pass
@@ -336,6 +345,10 @@ class QuartoFormatter(Formatter):
                 last_element = element
 
         for slide_idx, slide in enumerate(presentation_data.slides):
+            # Add slide visibility comment if enabled
+            if self.config.slide_visibility:
+                self.put_slide_visibility(slide.is_hidden)
+
             if slide.type == SlideType.General:
                 put_elements(slide.elements)
             elif slide.type == SlideType.MultiColumn:

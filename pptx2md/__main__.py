@@ -54,6 +54,14 @@ def parse_args() -> ConversionConfig:
         "--keep-similar-titles",
         action="store_true",
         help="keep similar titles (allow for repeated slide titles - One or more - Add (cont.) to the title)")
+    arg_parser.add_argument(
+        "--slide-visibility",
+        action="store_true",
+        help="show slide visibility status (<!-- Status: visible/hidden -->) in the output")
+    arg_parser.add_argument(
+        "--skip-hidden",
+        action="store_true",
+        help="skip hidden slides in the output (preserves original slide numbering)")
 
     args = arg_parser.parse_args()
 
@@ -81,6 +89,8 @@ def parse_args() -> ConversionConfig:
         min_block_size=args.min_block_size,
         page=args.page,
         keep_similar_titles=args.keep_similar_titles,
+        slide_visibility=args.slide_visibility,
+        skip_hidden=args.skip_hidden,
     )
 
 
