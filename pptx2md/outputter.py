@@ -181,10 +181,10 @@ class MarkdownFormatter(Formatter):
         self.ofile.write('\n'.join([gen_table_row(row) for row in table[1:]]) + '\n\n')
 
     def get_accent(self, text):
-        return ' _' + text + '_ '
+        return ' _' + text.strip(' \t') + '_ '
 
     def get_strong(self, text):
-        return ' __' + text + '__ '
+        return ' __' + text.strip(' \t') + '__ '
 
     def get_colored(self, text, rgb):
         return ' <span style="color:%s">%s</span> ' % (rgb_to_hex(rgb), text)
