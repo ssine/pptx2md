@@ -125,7 +125,7 @@ def is_two_column_text(slide):
     if slide.slide_layout.name != "TITLE":
         all_mu = list()
         all_sigma = list()
-        for shape in sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left')):
+        for shape in sorted(ungroup_shapes(slide.shapes), key=lambda s: (s.top or 0, s.left or 0)):
             if shape.shape_type == MSO_SHAPE_TYPE.PLACEHOLDER:
                 if shape.placeholder_format.type == PP_PLACEHOLDER.TITLE:
                     if shape.has_text_frame:
@@ -134,6 +134,10 @@ def is_two_column_text(slide):
                     continue
 
             if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or shape.has_text_frame:
+                if shape.left is None or shape.width is None:
+                    # A shape without an explicit position/size (offset absent
+                    # in the XML) has no horizontal centroid to contribute.
+                    continue
                 centroid_x = shape.left + shape.width / 2
                 all_mu.append(Length(centroid_x).mm)
                 all_sigma.append(Length(shape.width / 4).mm)  # Gaussiana - 2sigma
@@ -147,7 +151,7 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
 
     shapes_dict = {"shapes_pre": list(), "shapes_l": list(), "shapes_c": list(), "shapes_r": list()}
 
-    shapes = sorted(ungroup_shapes(slide.shapes), key=attrgetter('top', 'left'))
+    shapes = sorted(ungroup_shapes(slide.shapes), key=lambda s: (s.top or 0, s.left or 0))
 
     print("Ncols is %d" % ncols)
 
@@ -163,7 +167,7 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
         param_means = params[0:3]
         param_sds = params[3:]
     else:
-        raise (ValueError, "Error in the number of columns")
+        raise ValueError("Error in the number of columns")
 
     x_vector = np.arange(1, slide_width_mm)
 
@@ -178,6 +182,9 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
                 continue
 
         if shape.shape_type == MSO_SHAPE_TYPE.PICTURE or shape.has_text_frame:
+            if shape.left is None or shape.width is None:
+                shapes_dict["shapes_pre"].append(shape)
+                continue
             centroid_x = shape.left + shape.width / 2
             curr_mu = Length(centroid_x).mm
             curr_sigma = Length(shape.width / 4).mm  # Gaussian - 2sigma
@@ -198,11 +205,11 @@ def assign_shapes(slide, params, ncols=2, slide_width_mm=1000):
                 elif ncols == 3:
                     shapes_dict["shapes_c"].append(shape)
                 else:
-                    raise (ValueError, "Not allowed number of columns")
+                    raise ValueError("Not allowed number of columns")
             elif max_score_column == 2:
                 shapes_dict["shapes_r"].append(shape)
             else:
-                raise (ValueError, "Max number of columns does not correspond to the number of columns")
+                raise ValueError("Max number of columns does not correspond to the number of columns")
 
     return (shapes_dict)
 
