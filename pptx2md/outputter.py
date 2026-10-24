@@ -50,14 +50,7 @@ class Formatter:
                     case ElementType.Title:
                         element.content = element.content.strip()
                         if element.content:
-                            if last_title and last_title.level == element.level and fuzz.ratio(
-                                    last_title.content, element.content, score_cutoff=92):
-                                # skip if the title is the same as the last one
-                                # Allow for repeated slide titles - One or more - Add (cont.) to the title
-                                if self.config.keep_similar_titles:
-                                    self.put_title(f'{element.content} (cont.)', element.level)
-                            else:
-                                self.put_title(element.content, element.level)
+                            self.put_title(element.content, element.level)
                             last_title = element
                     case ElementType.ListItem:
                         if not (last_element and last_element.type == ElementType.ListItem):
@@ -72,9 +65,10 @@ class Formatter:
                 last_element = element
 
             if not self.config.disable_notes and slide.notes:
-                self.put_para('---')
+                self.put_para("::: {.notes}")
                 for note in slide.notes:
                     self.put_para(note)
+                self.put_para(":::")
 
             if slide_idx < len(presentation_data.slides) - 1 and self.config.enable_slides:
                 self.put_para("\n---\n")
@@ -97,8 +91,22 @@ class Formatter:
         self.put_para('')
 
     def get_formatted_runs(self, runs: List[TextRun]):
-        res = ''
+        merged: List[TextRun] = []
         for run in runs:
+            if not run.text:
+                continue
+            if merged and (
+                merged[-1].style.is_strong == run.style.is_strong and
+                merged[-1].style.is_accent == run.style.is_accent and
+                merged[-1].style.hyperlink == run.style.hyperlink and
+                merged[-1].style.color_rgb == run.style.color_rgb
+            ):
+                merged[-1].text += run.text
+            else:
+                merged.append(run)
+
+        res = ''
+        for run in merged:
             text = run.text
             if text == '':
                 continue
@@ -108,14 +116,21 @@ class Formatter:
 
             if run.style.hyperlink:
                 text = self.get_hyperlink(text, run.style.hyperlink)
-            if run.style.is_accent:
-                text = self.get_accent(text)
+            if run.style.is_strong and run.style.is_accent:
+                text = ' ***' + text.strip() + '*** '
             elif run.style.is_strong:
-                text = self.get_strong(text)
+                text = ' **' + text.strip() + '** '
+            elif run.style.is_accent:
+                text = ' _' + text.strip() + '_ '
             if run.style.color_rgb and not self.config.disable_color:
                 text = self.get_colored(text, run.style.color_rgb)
 
             res += text
+
+        res = re.sub(r' +', ' ', res)
+        res = re.sub(r'^[•\–\—\·]\s*', '', res)
+        res = re.sub(r'\*\*\s+([.,:;!?])', r'**\1', res)
+        res = re.sub(r'_\s+([.,:;!?])', r'_\1', res)
         return res.strip()
 
     def put_para(self, text):
@@ -150,6 +165,45 @@ class Formatter:
 
     def close(self):
         self.ofile.close()
+        try:
+            with open(self.config.output_path, 'r', encoding='utf8') as f:
+                content = f.read()
+
+            lines = [l.rstrip() for l in content.split('\n')]
+            text = '\n'.join(lines)
+            text = re.sub(r'\n{3,}', '\n\n', text)
+
+            lines = text.split('\n')
+            result = []
+            in_list = False
+
+            for line in lines:
+                stripped = line.strip()
+                is_list_item = bool(re.match(r'^\s*[\*\-\+]\s+', line))
+                is_colon_block = stripped.startswith(':::')
+
+                if is_list_item:
+                    if not in_list:
+                        if result and result[-1] != '':
+                            result.append('')
+                        in_list = True
+                else:
+                    if stripped != '':
+                        in_list = False
+
+                if is_colon_block:
+                    if result and result[-1] != '':
+                        result.append('')
+
+                result.append(line)
+
+            final_text = '\n'.join(result)
+            final_text = re.sub(r'\n{3,}', '\n\n', final_text)
+
+            with open(self.config.output_path, 'w', encoding='utf8') as f:
+                f.write(final_text.strip() + '\n')
+        except Exception:
+            pass
 
 
 class MarkdownFormatter(Formatter):
@@ -160,7 +214,7 @@ class MarkdownFormatter(Formatter):
         self.esc_re2 = re.compile(r'(<[^>]+>)')
 
     def put_title(self, text, level):
-        self.ofile.write('#' * level + ' ' + text + '\n\n')
+        self.ofile.write('#' * (level + 1) + ' ' + text + '\n\n')
 
     def put_list(self, text, level):
         self.ofile.write('  ' * level + '* ' + text.strip() + '\n')
@@ -184,7 +238,7 @@ class MarkdownFormatter(Formatter):
         return ' _' + text + '_ '
 
     def get_strong(self, text):
-        return ' __' + text + '__ '
+        return ' **' + text + '** '
 
     def get_colored(self, text, rgb):
         return ' <span style="color:%s">%s</span> ' % (rgb_to_hex(rgb), text)
@@ -251,7 +305,7 @@ class MadokoFormatter(Formatter):
         self.esc_re2 = re.compile(r'(<[^>]+>)')
 
     def put_title(self, text, level):
-        self.ofile.write('#' * level + ' ' + text + '\n\n')
+        self.ofile.write('#' * (level + 1) + ' ' + text + '\n\n')
 
     def put_list(self, text, level):
         self.ofile.write('  ' * level + '* ' + text.strip() + '\n')
@@ -273,7 +327,7 @@ class MadokoFormatter(Formatter):
         return ' _' + text + '_ '
 
     def get_strong(self, text):
-        return ' __' + text + '__ '
+        return ' **' + text + '** '
 
     def get_colored(self, text, rgb):
         return ' <span style="color:%s">%s</span> ' % (rgb_to_hex(rgb), text)
@@ -314,14 +368,7 @@ class QuartoFormatter(Formatter):
                     case ElementType.Title:
                         element.content = element.content.strip()
                         if element.content:
-                            if last_title and last_title.level == element.level and fuzz.ratio(
-                                    last_title.content, element.content, score_cutoff=92):
-                                # skip if the title is the same as the last one
-                                # Allow for repeated slide titles - One or more - Add (cont.) to the title
-                                if self.config.keep_similar_titles:
-                                    self.put_title(f'{element.content} (cont.)', element.level)
-                            else:
-                                self.put_title(element.content, element.level)
+                            self.put_title(element.content, element.level)
                             last_title = element
                     case ElementType.ListItem:
                         if not (last_element and last_element.type == ElementType.ListItem):
@@ -382,7 +429,7 @@ format:
 ''')
 
     def put_title(self, text, level):
-        self.ofile.write('#' * level + ' ' + text + '\n\n')
+        self.ofile.write('#' * (level + 1) + ' ' + text + '\n\n')
 
     def put_list(self, text, level):
         self.ofile.write('  ' * level + '* ' + text.strip() + '\n')
@@ -406,7 +453,7 @@ format:
         return ' _' + text + '_ '
 
     def get_strong(self, text):
-        return ' __' + text + '__ '
+        return ' **' + text + '** '
 
     def get_colored(self, text, rgb):
         return ' <span style="color:%s">%s</span> ' % (rgb_to_hex(rgb), text)
