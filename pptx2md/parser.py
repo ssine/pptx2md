@@ -48,11 +48,17 @@ picture_count = 0
 
 
 def is_title(shape):
+    if not shape.has_text_frame or not shape.text_frame.text.strip():
+        return False
     if shape.is_placeholder and (shape.placeholder_format.type == PP_PLACEHOLDER.TITLE or
                                  shape.placeholder_format.type == PP_PLACEHOLDER.SUBTITLE or
                                  shape.placeholder_format.type == PP_PLACEHOLDER.VERTICAL_TITLE or
                                  shape.placeholder_format.type == PP_PLACEHOLDER.CENTER_TITLE):
         return True
+    if hasattr(shape, 'top') and shape.top is not None and shape.top < 600000:
+        paras = [p for p in shape.text_frame.paragraphs if p.text.strip()]
+        if len(paras) == 1 and len(shape.text_frame.text.strip()) < 120:
+            return True
     return False
 
 
@@ -60,14 +66,42 @@ def is_text_block(config: ConversionConfig, shape):
     if shape.has_text_frame:
         if shape.is_placeholder and shape.placeholder_format.type == PP_PLACEHOLDER.BODY:
             return True
-        if len(shape.text) > config.min_block_size:
+        if len(shape.text.strip()) > 0:
             return True
+    return False
+
+
+def is_bullet_paragraph(para, shape=None) -> bool:
+    if para.level > 0:
+        return True
+    if para.text.strip().startswith(('•', '–', '—', '·')):
+        return True
+    try:
+        pPr = para._p.get_or_add_pPr()
+        tags = [c.tag.split("}")[-1] for c in pPr]
+        if any(b in tags for b in ["buChar", "buAutoNum", "buBlip"]):
+            return True
+        if shape and hasattr(shape, "is_placeholder") and shape.is_placeholder and shape.placeholder_format.type == PP_PLACEHOLDER.BODY:
+            paras = [p for p in shape.text_frame.paragraphs if p.text.strip()]
+            if len(paras) > 1:
+                has_any_bu = any(
+                    any(b in [c.tag.split("}")[-1] for c in p._p.get_or_add_pPr()] for b in ["buChar", "buAutoNum", "buBlip"])
+                    for p in paras
+                )
+                if not has_any_bu:
+                    return True
+        if "buNone" in tags:
+            return False
+    except Exception:
+        pass
     return False
 
 
 def is_list_block(shape) -> bool:
     levels = []
     for para in shape.text_frame.paragraphs:
+        if is_bullet_paragraph(para, shape):
+            return True
         if para.level not in levels:
             levels.append(para.level)
         if para.level != 0 or len(levels) > 1:
@@ -76,20 +110,11 @@ def is_list_block(shape) -> bool:
 
 
 def is_accent(font):
-    if font.underline or font.italic or (
-            font.color.type == MSO_COLOR_TYPE.SCHEME and
-        (font.color.theme_color == MSO_THEME_COLOR.ACCENT_1 or font.color.theme_color == MSO_THEME_COLOR.ACCENT_2 or
-         font.color.theme_color == MSO_THEME_COLOR.ACCENT_3 or font.color.theme_color == MSO_THEME_COLOR.ACCENT_4 or
-         font.color.theme_color == MSO_THEME_COLOR.ACCENT_5 or font.color.theme_color == MSO_THEME_COLOR.ACCENT_6)):
-        return True
-    return False
+    return bool(font.italic or font.underline)
 
 
 def is_strong(font):
-    if font.bold or (font.color.type == MSO_COLOR_TYPE.SCHEME and (font.color.theme_color == MSO_THEME_COLOR.DARK_1 or
-                                                                   font.color.theme_color == MSO_THEME_COLOR.DARK_2)):
-        return True
-    return False
+    return bool(font.bold)
 
 
 def get_text_runs(para) -> List[TextRun]:
@@ -128,18 +153,17 @@ def process_title(config: ConversionConfig, shape, slide_idx) -> TitleElement:
 
 def process_text_blocks(config: ConversionConfig, shape, slide_idx) -> List[Union[ListItemElement, ParagraphElement]]:
     results = []
-    if is_list_block(shape):
-        for para in shape.text_frame.paragraphs:
-            if para.text.strip() == '':
-                continue
-            text = get_text_runs(para)
+    shape_is_list = is_list_block(shape)
+    for para in shape.text_frame.paragraphs:
+        if para.text.strip() == '':
+            continue
+        text = get_text_runs(para)
+        pPr = para._p.get_or_add_pPr()
+        tags = [c.tag.split("}")[-1] for c in pPr]
+        has_bu_none = "buNone" in tags
+        if is_bullet_paragraph(para, shape) or (shape_is_list and not has_bu_none):
             results.append(ListItemElement(content=text, level=para.level))
-    else:
-        # paragraph block
-        for para in shape.text_frame.paragraphs:
-            if para.text.strip() == '':
-                continue
-            text = get_text_runs(para)
+        else:
             results.append(ParagraphElement(content=text))
     return results
 
