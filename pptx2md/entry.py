@@ -32,6 +32,11 @@ def convert(config: ConversionConfig):
 
     ast = parse(config, prs)
 
+    if config.page is not None and not ast.slides:
+        logger.error(f'page {config.page} is out of range: '
+                     f'presentation has {len(prs.slides)} slide(s)')
+        raise SystemExit(2)
+
     if str(config.output_path).endswith('.json'):
         with open(config.output_path, 'w') as f:
             f.write(ast.model_dump_json(indent=2))
